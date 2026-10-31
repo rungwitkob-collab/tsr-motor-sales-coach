@@ -18,6 +18,7 @@ import { pitchRoute } from "./routes/pitch.ts";
 import { progressRoute } from "./routes/progress.ts";
 import { quizRoute } from "./routes/quiz.ts";
 import { roleplayRoute } from "./routes/roleplay.ts";
+import { ttsRoute } from "./routes/tts.ts";
 
 // Workers ไม่อนุญาต eval/new Function จึงปิด JIT ของ zod และใช้ข้อความ error ภาษาไทย
 z.config(z.locales.th());
@@ -59,6 +60,7 @@ api.use("*", async (c, next) => {
 api.post("/auth/check", (c) => c.json({ ok: true, model: modelName(c.env) }));
 api.route("/personas", personasRoute);
 api.route("/roleplay", roleplayRoute);
+api.route("/tts", ttsRoute);
 api.route("/evaluate", evaluateRoute);
 api.route("/objection", objectionRoute);
 api.route("/pitch", pitchRoute);

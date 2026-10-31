@@ -28,7 +28,7 @@ export interface GeminiCallOptions {
 
 interface GeminiResponsePayload {
   candidates?: {
-    content?: { parts?: { text?: string; thought?: boolean }[] };
+    content?: { parts?: { text?: string; thought?: boolean; inlineData?: { mimeType?: string; data?: string } }[] };
     finishReason?: string;
   }[];
   promptFeedback?: { blockReason?: string };
@@ -141,7 +141,7 @@ async function toAppError(res: Response, model: string): Promise<AppError> {
     return new AppError(500, "CONFIG_ERROR", "API key ไม่มีสิทธิ์ใช้ Gemini API ตรวจสอบ key ใน Google AI Studio");
   }
   if (res.status === 404) {
-    return new AppError(500, "CONFIG_ERROR", `ไม่พบ model "${model}" ตรวจสอบค่า GEMINI_MODEL ใน wrangler.jsonc`);
+    return new AppError(500, "CONFIG_ERROR", `ไม่พบ model "${model}" ตรวจสอบค่า GEMINI_MODEL / GEMINI_TTS_MODEL ใน wrangler.jsonc`);
   }
   if (res.status >= 500) {
     return new AppError(503, "UPSTREAM_ERROR", "ระบบ AI ขัดข้องหรือหนาแน่นชั่วคราว กรุณาลองใหม่ในอีกประมาณ 30 วินาที", 30);
@@ -155,12 +155,13 @@ async function fetchGemini(
   body: Record<string, unknown>,
   timeoutMs: number,
   readJson: boolean,
+  modelOverride?: string,
 ): Promise<{ res: Response; json?: GeminiResponsePayload }> {
   const apiKey = env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     throw new AppError(500, "CONFIG_ERROR", "ยังไม่ได้ตั้งค่า GEMINI_API_KEY (ดูขั้นตอนใน README)");
   }
-  const model = modelName(env);
+  const model = modelOverride ?? modelName(env);
   const base = env.GEMINI_API_BASE?.trim().replace(/\/+$/, "") || API_BASE;
   const url = `${base}/${encodeURIComponent(model)}:${method}${method === "streamGenerateContent" ? "?alt=sse" : ""}`;
   const controller = new AbortController();
@@ -279,4 +280,79 @@ export async function streamGenerate(env: Env, opts: GeminiCallOptions): Promise
       "X-Accel-Buffering": "no",
     },
   });
+}
+
+/* ------------------------------------------------------------------ */
+/* Text-to-speech (เสียงลูกค้า)                                          */
+/* ------------------------------------------------------------------ */
+
+export interface SpeechOptions {
+  /** รุ่น TTS เช่น gemini-3.8-flash-tts */
+  model: string;
+  text: string;
+  /** ชื่อเสียงสำเร็จรูปของ Gemini เช่น Kore, Charon */
+  voice: string;
+  timeoutMs?: number;
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+/** ห่อ PCM 16-bit (audio/L16) ด้วย header WAV เพื่อให้ decodeAudioData ของเบราว์เซอร์อ่านได้ */
+function pcmToWav(pcm: Uint8Array, sampleRate: number, channels: number): Uint8Array {
+  const header = new ArrayBuffer(44);
+  const v = new DataView(header);
+  const writeAscii = (offset: number, s: string) => {
+    for (let i = 0; i < s.length; i++) v.setUint8(offset + i, s.charCodeAt(i));
+  };
+  writeAscii(0, "RIFF");
+  v.setUint32(4, 36 + pcm.byteLength, true);
+  writeAscii(8, "WAVE");
+  writeAscii(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); // PCM
+  v.setUint16(22, channels, true);
+  v.setUint32(24, sampleRate, true);
+  v.setUint32(28, sampleRate * channels * 2, true);
+  v.setUint16(32, channels * 2, true);
+  v.setUint16(34, 16, true);
+  writeAscii(36, "data");
+  v.setUint32(40, pcm.byteLength, true);
+  const out = new Uint8Array(44 + pcm.byteLength);
+  out.set(new Uint8Array(header), 0);
+  out.set(pcm, 44);
+  return out;
+}
+
+/** เรียกรุ่น TTS ของ Gemini แล้วคืนไฟล์ WAV (24 kHz mono 16-bit) */
+export async function generateSpeech(env: Env, opts: SpeechOptions): Promise<Uint8Array> {
+  const body = {
+    contents: [{ role: "user", parts: [{ text: opts.text }] }],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: opts.voice } } },
+    },
+  };
+  const { json } = await fetchGemini(env, "generateContent", body, opts.timeoutMs ?? 25_000, true, opts.model);
+  const cand = json?.candidates?.[0];
+  if (json?.promptFeedback?.blockReason || (cand?.finishReason && SAFETY_FINISH_REASONS.has(cand.finishReason))) {
+    throw safetyError();
+  }
+  const inline = cand?.content?.parts?.find((p) => p.inlineData?.data)?.inlineData;
+  if (!inline?.data) {
+    throw new AppError(502, "INVALID_AI_RESPONSE", "AI ไม่ได้ส่งเสียงกลับมา กรุณาลองใหม่");
+  }
+  const mime = inline.mimeType ?? "";
+  const bytes = base64ToBytes(inline.data);
+  if (/^audio\/wav/i.test(mime) || (bytes.length > 4 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46)) {
+    return bytes;
+  }
+  // audio/L16; rate=24000; channels=1
+  const rate = Number(/rate=(\d+)/i.exec(mime)?.[1] ?? 24000);
+  const channels = Number(/channels=(\d+)/i.exec(mime)?.[1] ?? 1);
+  return pcmToWav(bytes, rate, channels);
 }

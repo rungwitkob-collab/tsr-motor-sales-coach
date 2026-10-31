@@ -477,8 +477,9 @@ export function RoleplayPage() {
               </label>
             )}
             {!mic.supported && <span>เบราว์เซอร์นี้ไม่รองรับการพูดผ่านไมค์ ใช้การพิมพ์แทนได้{isIOS() ? " (iOS: ลองใช้ Safari เวอร์ชันล่าสุด)" : ""}</span>}
-            {tts.supported && !tts.hasThaiVoice && ttsOn && <span>เครื่องนี้ไม่มีเสียงอ่านภาษาไทย เสียงอาจไม่ชัด</span>}
-            {tts.supported && ttsOn && isIOS() && <span>iPhone: ถ้าไม่ได้ยินเสียงหลังใช้ไมค์ แตะ "ฟังอีกครั้ง" ที่ข้อความลูกค้า</span>}
+            {ttsOn && tts.notice && <span className="text-warning-700">{tts.notice}</span>}
+            {ttsOn && tts.provider === "browser" && !tts.hasThaiVoice && <span>เครื่องนี้ไม่มีเสียงอ่านภาษาไทย เสียงอาจไม่ชัด</span>}
+            {ttsOn && isIOS() && <span>iPhone: ถ้าไม่ได้ยินเสียง แตะ "ฟังอีกครั้ง" ที่ข้อความลูกค้า และตรวจว่าไม่ได้ลดเสียงไว้</span>}
           </div>
         </div>
       </div>
