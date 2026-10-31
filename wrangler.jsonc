@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // ชื่อ Worker = ส่วนหน้าของ URL -> https://coach.sales-tool.workers.dev (ถ้าใช้ subdomain สำรอง URL จะเป็น https://coach.<subdomain>.workers.dev)
+  // ชื่อ Worker = ส่วนหน้าของ URL -> https://coach.<workers.dev subdomain ของบัญชี>.workers.dev
+  // บัญชีปัจจุบันมี subdomain "fpc-tool" อยู่แล้ว URL จริงคือ https://coach.fpc-tool.workers.dev
   "name": "coach",
   "main": "src/worker/index.ts",
   // วันที่ล่าสุดที่ workerd ใน wrangler เวอร์ชันที่ติดตั้งรองรับ (ถ้าใช้ 2026-10-31 คำสั่ง npm run dev จะเปิดไม่ขึ้น)

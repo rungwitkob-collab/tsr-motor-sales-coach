@@ -6,7 +6,8 @@
 #   CLOUDFLARE_ACCOUNT_ID  Account ID (หน้า Workers & Pages ใน Dashboard ด้านขวา)
 # ตัวแปรไม่บังคับ:
 #   GEMINI_API_KEY, APP_PASSCODE   ถ้ามีจะตั้งเป็น Worker secret ให้หลัง deploy
-#   WORKERS_SUBDOMAIN              workers.dev subdomain ที่ต้องการ (ค่าเริ่มต้น sales-tool)
+#   WORKERS_SUBDOMAIN              workers.dev subdomain ที่ต้องการ (ค่าเริ่มต้น sales-tool) ใช้เฉพาะบัญชีที่ยังไม่มี subdomain
+#                                  ถ้าบัญชีมีอยู่แล้ว (เช่น fpc-tool) สคริปต์จะใช้ชื่อเดิมและพิมพ์ URL จริงให้
 #
 # ใช้: ./deploy.sh
 set -euo pipefail

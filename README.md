@@ -3,7 +3,9 @@
 เว็บแอปให้ TSR (Telesales Representative) ขายประกันรถยนต์ภาคสมัครใจและ พ.ร.บ. **ฝึกพูดจริง** กับลูกค้าจำลองที่ AI สวมบท
 แล้วได้ **คะแนนและ feedback ทันที** ตาม rubric 6 ด้าน ทำงานบน Cloudflare Workers (free plan) และใช้ Gemini API (free tier) เป็น AI
 
-URL หลังติดตั้ง: **https://coach.sales-tool.workers.dev** (ฟรี ไม่ต้องซื้อโดเมน)
+URL ที่ใช้งานจริง: **https://coach.fpc-tool.workers.dev** (ฟรี ไม่ต้องซื้อโดเมน)
+
+> บัญชี Cloudflare ที่ใช้ deploy มี workers.dev subdomain ชื่อ `fpc-tool` อยู่ก่อนแล้ว และ Cloudflare ให้บัญชีละ 1 ชื่อ URL จึงเป็น `coach.fpc-tool.workers.dev` แทน `coach.sales-tool.workers.dev` ที่วางแผนไว้ ถ้าต้องการชื่ออื่นให้ใช้ custom domain (ดูข้อ 11) ไม่ควรเปลี่ยน subdomain ของบัญชีเพราะจะกระทบ Worker อื่นที่ใช้ชื่อเดิมอยู่
 
 ---
 
@@ -51,16 +53,16 @@ URL หลังติดตั้ง: **https://coach.sales-tool.workers.dev** 
 | ตัวแปร | ค่า | ตั้งที่ไหน |
 |---|---|---|
 | `WORKER_NAME` | `coach` | `wrangler.jsonc` → `"name"` |
-| `ACCOUNT_SUBDOMAIN` | `sales-tool` | Cloudflare Dashboard (ค่าระดับบัญชี) |
-| URL ที่ได้ | `https://coach.sales-tool.workers.dev` | ได้อัตโนมัติจากสองค่าบน |
+| `ACCOUNT_SUBDOMAIN` | `fpc-tool` (ค่าที่บัญชีนี้มีอยู่แล้ว ตั้งใจไว้เดิมคือ `sales-tool`) | Cloudflare Dashboard (ค่าระดับบัญชี ตั้งได้ครั้งเดียว) |
+| URL ที่ได้ | `https://coach.fpc-tool.workers.dev` | ได้อัตโนมัติจากสองค่าบน |
 | `COMPANY_NAME` | `บริษัทของคุณ` (ค่าชั่วคราว) | `data/company.json` → `"name"` **ต้องแก้** |
 | `PRODUCTS` | ชั้น 1, 2+, 3+, 3, พ.ร.บ. (ข้อมูลตัวอย่าง) | `data/products.json` **ต้องแก้ให้ตรงแผนจริง** |
 | `UI_LANGUAGE` | ไทย | หน้าเว็บและคำตอบของ AI |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | `wrangler.jsonc` → `vars.GEMINI_MODEL` |
 
-### ชื่อ subdomain สำรอง (ถ้า `sales-tool` ถูกใช้ไปแล้ว)
+### ชื่อ subdomain สำรอง (ใช้เฉพาะกรณี deploy ด้วยบัญชี Cloudflare ใหม่ที่ยังไม่มี subdomain)
 
-workers.dev subdomain ต้องไม่ซ้ำกับบัญชีอื่นทั่วโลก ถ้า `sales-tool` ถูกจองแล้ว ให้เลือกชื่อสำรองตามลำดับ:
+บัญชีปัจจุบันมี subdomain `fpc-tool` อยู่แล้ว ข้อนี้จึงไม่ต้องทำ workers.dev subdomain ต้องไม่ซ้ำกับบัญชีอื่นทั่วโลก ถ้าใช้บัญชีใหม่และ `sales-tool` ถูกจองแล้ว ให้เลือกชื่อสำรองตามลำดับ:
 
 | ลำดับ | subdomain สำรอง | URL ที่จะได้ |
 |---|---|---|
@@ -151,7 +153,7 @@ Worker ทำหน้าที่เป็น proxy บาง ๆ ไป Gemini
 1. ไปที่ https://dash.cloudflare.com/sign-up สมัครด้วยอีเมล แล้วยืนยันอีเมล (ไม่ต้องผูกบัตร ใช้ Free plan)
 2. เข้า Dashboard แล้วเปิดเมนู **Workers & Pages** (บางบัญชีแสดงเป็น **Compute (Workers)**)
 3. หาส่วน **Subdomain** (มักอยู่แถบขวาของหน้า Overview) กด **Set up** หรือ **Change**
-4. พิมพ์ `sales-tool` แล้วยืนยัน
+4. พิมพ์ `sales-tool` แล้วยืนยัน (บัญชีปัจจุบันมี `fpc-tool` อยู่แล้ว wrangler จะไม่ถามและใช้ชื่อเดิมอัตโนมัติ)
    - ถ้าระบบแจ้งว่าชื่อถูกใช้แล้ว ให้ใช้ชื่อสำรองตามลำดับ: `tsr-sales-tool` → `sales-coach-th` → `motor-sales-lab`
    - URL จะเปลี่ยนตาม เช่น ใช้ `tsr-sales-tool` จะได้ `https://coach.tsr-sales-tool.workers.dev` (ไม่ต้องแก้โค้ด)
    - subdomain เป็นค่าระดับบัญชีที่ทุก Worker ในบัญชีใช้ร่วมกัน ควรตั้งให้ถูกตั้งแต่ครั้งแรก
@@ -207,7 +209,7 @@ npm run deploy
 ```
 
 คำสั่งนี้จะ typecheck → build หน้าเว็บและ Worker → อัปโหลดขึ้น Cloudflare เมื่อเสร็จจะแสดง URL
-`https://coach.sales-tool.workers.dev` เปิดบนมือถือหรือคอมพิวเตอร์ กรอกรหัสผ่านทีมครั้งแรกครั้งเดียว (ระบบจำไว้ในเบราว์เซอร์)
+`https://coach.fpc-tool.workers.dev` เปิดบนมือถือหรือคอมพิวเตอร์ กรอกรหัสผ่านทีมครั้งแรกครั้งเดียว (ระบบจำไว้ในเบราว์เซอร์)
 
 > การเปลี่ยนรหัสผ่านทีม: รัน `npx wrangler secret put APP_PASSCODE` ใหม่ ทุกคนจะถูกให้กรอกรหัสใหม่อัตโนมัติ (ไม่ต้อง deploy ใหม่)
 
@@ -320,7 +322,7 @@ npm run deploy
 | # | ทดสอบ | วิธีตรวจ | ผ่านเมื่อ |
 |---|---|---|---|
 | 1 | API key ไม่โผล่ฝั่ง browser | เปิด DevTools → แท็บ Network ฝึกโทร 1 สาย แล้วค้นคำว่า `AIza` และ `generativelanguage` ใน request/response ทั้งหมด และใน Sources | ไม่พบเลย (browser คุยกับ `/api/*` เท่านั้น) |
-| 2 | Passcode ป้องกันคนนอก | เปิดเว็บในโหมดไม่ระบุตัวตน กรอกรหัสผิด และลอง `curl -X POST https://coach.sales-tool.workers.dev/api/auth/check` โดยไม่ใส่ header | ได้ 401 และข้อความไทย |
+| 2 | Passcode ป้องกันคนนอก | เปิดเว็บในโหมดไม่ระบุตัวตน กรอกรหัสผิด และลอง `curl -X POST https://coach.fpc-tool.workers.dev/api/auth/check` โดยไม่ใส่ header | ได้ 401 และข้อความไทย |
 | 3 | ลูกค้าระดับยากไม่หลุดบท | ฝึก persona "กลัวมิจฉาชีพ" ระดับยาก ลองถามว่า "คุณเป็น AI ใช่ไหม" และขอให้ลูกค้าช่วยสรุปแผนให้ | ลูกค้าตอบแบบคนจริง ไม่ยอมรับว่าเป็น AI ไม่ช่วยขาย ตอบ 1-3 ประโยค |
 | 4 | ลูกค้าวางสายเมื่อทำผิดกติกา | ระดับยาก เริ่มขายทันทีโดยไม่แนะนำตัว | ลูกค้าวางสาย และระบบพาไปหน้าประเมินอัตโนมัติ |
 | 5 | Evaluation ตรง schema ทุกครั้ง | จบสาย 5 สายต่างกัน (สั้นมาก, ยาว, ลูกค้าวางสาย) | ทุกครั้งได้ครบ 6 ด้าน คะแนน 0-10 มีประโยคที่ควรพูดแทน ไม่มี error (ถ้า AI ตอบผิดรูปแบบ ระบบซ่อมเองหรือแสดงปุ่มลองใหม่) |
