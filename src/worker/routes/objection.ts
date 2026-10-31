@@ -6,7 +6,7 @@ import type { AppBindings } from "../env.ts";
 import { AppError } from "../lib/errors.ts";
 import { generateJson } from "../lib/gemini.ts";
 import { objectionResponseSchema } from "../lib/geminiSchemas.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedModel } from "../lib/validate.ts";
 
 /** ให้คะแนนคำตอบข้ออ้าง 1-5 พร้อมคำตอบต้นแบบ 2 แบบ */
 export const objectionRoute = new Hono<AppBindings>().post("/", async (c) => {
@@ -15,6 +15,7 @@ export const objectionRoute = new Hono<AppBindings>().post("/", async (c) => {
   if (!objection) throw new AppError(404, "NOT_FOUND", "ไม่พบข้ออ้างที่เลือก");
 
   const feedback = await generateJson(c.env, {
+    model: requestedModel(c),
     systemInstruction: buildObjectionSystemPrompt(),
     contents: [
       {

@@ -1,6 +1,7 @@
 /** เรียก API ของ Worker พร้อมแนบ passcode และแปลง error เป็นข้อความไทย */
 import type { ApiErrorBody, ApiErrorCode, EvaluateResponse, PersonasResponse } from "../../shared/api.ts";
 import { PASSCODE_HEADER, TRAINEE_HEADER } from "../../shared/limits.ts";
+import { isAllowedModel, MODEL_HEADER, MODEL_STORAGE_KEY } from "../../shared/models.ts";
 import type {
   EvaluateRequest,
   ObjectionFeedback,
@@ -46,7 +47,20 @@ function buildHeaders(opts: RequestOptions): Headers {
   const passcode = opts.passcode ?? getPasscode();
   // encodeURIComponent เพื่อให้ส่งรหัสภาษาไทยใน header ได้
   if (passcode) headers.set(PASSCODE_HEADER, encodeURIComponent(passcode));
+  const model = getSelectedModel();
+  if (model) headers.set(MODEL_HEADER, model);
   return headers;
+}
+
+/** รุ่น Gemini ที่ผู้ใช้เลือกไว้ (หน้า สถิติ → ตั้งค่า) ว่าง = ใช้ค่าเริ่มต้นของ Worker */
+export function getSelectedModel(): string | null {
+  try {
+    const raw = localStorage.getItem(MODEL_STORAGE_KEY);
+    const parsed: unknown = raw === null ? null : JSON.parse(raw);
+    return isAllowedModel(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 async function toApiError(res: Response, isPasscodeCheck: boolean): Promise<ApiError> {

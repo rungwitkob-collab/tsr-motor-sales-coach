@@ -17,11 +17,16 @@ export interface GeminiContent {
 }
 
 export interface GeminiCallOptions {
+  /** รุ่นที่จะใช้ (จาก requestedModel) ถ้าไม่ระบุใช้ค่าเริ่มต้นของ Worker */
+  model?: string;
   systemInstruction: string;
   contents: GeminiContent[];
   temperature?: number;
   maxOutputTokens?: number;
-  /** งบ thinking token (เฉพาะรุ่น 2.5) 0 = ปิด เพื่อความเร็วและประหยัด quota */
+  /**
+   * งบ thinking token 0 = คิดน้อยที่สุด เพื่อความเร็วและประหยัด quota
+   * รุ่น 2.5 ใช้ thinkingBudget ตรง ๆ ส่วนรุ่น 3.x ไม่รับ thinkingBudget จะแปลงเป็น thinkingLevel ให้
+   */
   thinkingBudget?: number;
   timeoutMs?: number;
 }
@@ -68,12 +73,22 @@ function supportsThinkingBudget(model: string): boolean {
   return /gemini-2\.5/i.test(model);
 }
 
+/**
+ * รุ่น 3.x รับ thinkingLevel แทน thinkingBudget (ส่ง thinkingBudget ไปจะได้ 400)
+ * "minimal" รองรับเฉพาะรุ่น flash/flash-lite ของ 3.5 (ทดสอบแล้ว) รุ่น 3.8-flash ปฏิเสธ จึงใช้ "low" เป็นค่าปลอดภัย
+ */
+function thinkingLevelFor(model: string, budget: number): string | undefined {
+  if (!/gemini-3/i.test(model)) return undefined;
+  if (budget === 0 && /gemini-3\.5-flash/i.test(model)) return "minimal";
+  return budget > 1024 ? "medium" : "low";
+}
+
 function buildBody(
   env: Env,
   opts: GeminiCallOptions,
   json?: { schema: GeminiSchema },
 ): Record<string, unknown> {
-  const model = modelName(env);
+  const model = opts.model ?? modelName(env);
   const generationConfig: Record<string, unknown> = {
     temperature: opts.temperature ?? 0.7,
     maxOutputTokens: opts.maxOutputTokens ?? 1024,
@@ -82,10 +97,15 @@ function buildBody(
     generationConfig.responseMimeType = "application/json";
     generationConfig.responseSchema = json.schema;
   }
-  if (supportsThinkingBudget(model) && opts.thinkingBudget !== undefined) {
-    // gemini-2.5-pro ปิด thinking ไม่ได้ (ขั้นต่ำ 128)
-    const min = /pro/i.test(model) ? 128 : 0;
-    generationConfig.thinkingConfig = { thinkingBudget: Math.max(min, opts.thinkingBudget) };
+  if (opts.thinkingBudget !== undefined) {
+    if (supportsThinkingBudget(model)) {
+      // gemini-2.5-pro ปิด thinking ไม่ได้ (ขั้นต่ำ 128)
+      const min = /pro/i.test(model) ? 128 : 0;
+      generationConfig.thinkingConfig = { thinkingBudget: Math.max(min, opts.thinkingBudget) };
+    } else {
+      const level = thinkingLevelFor(model, opts.thinkingBudget);
+      if (level) generationConfig.thinkingConfig = { thinkingLevel: level };
+    }
   }
   return {
     systemInstruction: { parts: [{ text: opts.systemInstruction }] },
@@ -228,7 +248,7 @@ export async function generateJson<S extends z.ZodType>(
   let contents = opts.contents;
   for (let attempt = 0; attempt < 2; attempt++) {
     const body = buildBody(env, { ...opts, contents }, { schema: opts.responseSchema });
-    const { json } = await fetchGemini(env, "generateContent", body, opts.timeoutMs ?? 45_000, true);
+    const { json } = await fetchGemini(env, "generateContent", body, opts.timeoutMs ?? 45_000, true, opts.model);
     const { text, finishReason, blockReason } = extractText(json ?? {});
     if (blockReason || (finishReason && SAFETY_FINISH_REASONS.has(finishReason))) throw safetyError();
 
@@ -270,7 +290,7 @@ export async function generateJson<S extends z.ZodType>(
  */
 export async function streamGenerate(env: Env, opts: GeminiCallOptions): Promise<Response> {
   const body = buildBody(env, opts);
-  const { res } = await fetchGemini(env, "streamGenerateContent", body, opts.timeoutMs ?? 20_000, false);
+  const { res } = await fetchGemini(env, "streamGenerateContent", body, opts.timeoutMs ?? 20_000, false, opts.model);
   if (!res.body) throw new AppError(502, "UPSTREAM_ERROR", "AI ไม่ได้ส่งข้อมูลกลับมา กรุณาลองใหม่");
   return new Response(res.body, {
     status: 200,

@@ -8,7 +8,7 @@ import { AppError } from "../lib/errors.ts";
 import { generateJson } from "../lib/gemini.ts";
 import { evaluationResponseSchema } from "../lib/geminiSchemas.ts";
 import { findPersona } from "../lib/personas.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedModel } from "../lib/validate.ts";
 
 /** ประเมินบทสนทนาทั้งสาย คืน scorecard ตาม schema ตายตัว */
 export const evaluateRoute = new Hono<AppBindings>().post("/", async (c) => {
@@ -17,6 +17,7 @@ export const evaluateRoute = new Hono<AppBindings>().post("/", async (c) => {
   if (!persona) throw new AppError(404, "NOT_FOUND", "ไม่พบลูกค้าจำลองที่เลือก");
 
   const ai = await generateJson(c.env, {
+    model: requestedModel(c),
     systemInstruction: buildEvaluationSystemPrompt(),
     contents: [{ role: "user", parts: [{ text: buildEvaluationUserPrompt({ persona, ...req }) }] }],
     responseSchema: evaluationResponseSchema,

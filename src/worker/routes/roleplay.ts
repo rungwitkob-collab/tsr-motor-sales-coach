@@ -5,7 +5,7 @@ import type { AppBindings } from "../env.ts";
 import { AppError } from "../lib/errors.ts";
 import { streamGenerate, type GeminiContent } from "../lib/gemini.ts";
 import { findPersona } from "../lib/personas.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedModel } from "../lib/validate.ts";
 
 /** ลูกค้าจำลองตอบกลับแบบ streaming (SSE) */
 export const roleplayRoute = new Hono<AppBindings>().post("/", async (c) => {
@@ -22,6 +22,7 @@ export const roleplayRoute = new Hono<AppBindings>().post("/", async (c) => {
   ];
 
   return streamGenerate(c.env, {
+    model: requestedModel(c),
     systemInstruction: buildCustomerSystemPrompt(persona, req.difficulty, turn),
     contents,
     temperature: req.difficulty === "hard" ? 1.0 : 0.85,

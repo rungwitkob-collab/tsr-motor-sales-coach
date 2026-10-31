@@ -1,6 +1,7 @@
 /** โมดูล 6: Progress Dashboard (เก็บใน localStorage พร้อม export/import JSON) */
 import { useRef, useState, type ChangeEvent } from "react";
 import { findObjection } from "../../shared/content.ts";
+import { MODEL_OPTIONS, MODEL_STORAGE_KEY } from "../../shared/models.ts";
 import { difficultyLabel, RUBRIC, rubricItem } from "../../shared/rubric.ts";
 import { EmptyState } from "../components/Feedback.tsx";
 import { Icon, type IconName } from "../components/Icon.tsx";
@@ -13,6 +14,7 @@ import { clearPasscode, getTraineeName, setTraineeName } from "../lib/passcode.t
 import { progressActions, useProgress } from "../lib/progress.ts";
 import { navigate } from "../lib/router.ts";
 import { parseProgress } from "../lib/storage.ts";
+import { useLocalStorageState } from "../lib/useLocalStorage.ts";
 import { average, averageCategoryScores, computeStreak, localDateKey, weakestCategory } from "../lib/stats.ts";
 
 function StatTile({ label, value, sub, icon, gold }: { label: string; value: string; sub?: string; icon: IconName; gold?: boolean }) {
@@ -33,6 +35,9 @@ export function DashboardPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [name, setName] = useState(progress.traineeName || getTraineeName());
+  // "" = ใช้รุ่นเริ่มต้นของ Worker (GEMINI_MODEL ใน wrangler.jsonc)
+  const [model, setModel] = useLocalStorageState(MODEL_STORAGE_KEY, "");
+  const selectedModel = MODEL_OPTIONS.find((m) => m.id === model) ?? MODEL_OPTIONS[0];
 
   const { calls, drills, quizzes } = progress;
   const streak = computeStreak(progress);
@@ -236,6 +241,19 @@ export function DashboardPage() {
               บันทึก
             </button>
           </div>
+        </label>
+        <label className="mt-4 block space-y-1.5">
+          <span className={ui.label}>รุ่น AI สำหรับลูกค้าจำลองและการประเมิน</span>
+          <select className={ui.input} value={selectedModel?.id ?? ""} onChange={(e) => setModel(e.target.value)} aria-label="เลือกรุ่น AI">
+            {MODEL_OPTIONS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <span className="block text-xs text-ink-muted">
+            {selectedModel?.description} มีผลกับเครื่องนี้ทันที (ไม่ต้อง deploy ใหม่) ถ้ารุ่นที่เลือกแจ้งว่าโควตาเต็ม ให้สลับไปรุ่นอื่นชั่วคราว
+          </span>
         </label>
         <button type="button" onClick={logout} className={`${ui.link} mt-4 text-sm`}>
           ออกจากระบบ (ล้างรหัสผ่านทีมในเครื่องนี้)

@@ -9,6 +9,7 @@ import type { HealthResponse } from "../shared/api.ts";
 import { LIMITS } from "../shared/limits.ts";
 import { modelName, type AppBindings, type Env } from "./env.ts";
 import { AppError } from "./lib/errors.ts";
+import { requestedModel } from "./lib/validate.ts";
 import { passcodeAuth } from "./middleware/auth.ts";
 import { rateLimit } from "./middleware/rateLimit.ts";
 import { evaluateRoute } from "./routes/evaluate.ts";
@@ -29,6 +30,8 @@ const api = new Hono<AppBindings>().basePath("/api");
 api.use("*", async (c, next) => {
   await next();
   c.header("X-Content-Type-Options", "nosniff");
+  // บอกหน้าเว็บ/ผู้ดูแลว่า request นี้ใช้รุ่นไหน (ช่วยตรวจสอบตอนสลับรุ่น)
+  c.header("X-Gemini-Model", requestedModel(c));
   c.header("Cache-Control", c.res.headers.get("Cache-Control") ?? "no-store");
 });
 
@@ -57,7 +60,7 @@ api.use("*", async (c, next) => {
   await next();
 });
 
-api.post("/auth/check", (c) => c.json({ ok: true, model: modelName(c.env) }));
+api.post("/auth/check", (c) => c.json({ ok: true, model: requestedModel(c) }));
 api.route("/personas", personasRoute);
 api.route("/roleplay", roleplayRoute);
 api.route("/tts", ttsRoute);

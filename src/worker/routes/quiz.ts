@@ -4,12 +4,13 @@ import { quizRequestSchema, quizResponseSchema } from "../../shared/schemas.ts";
 import type { AppBindings } from "../env.ts";
 import { generateJson } from "../lib/gemini.ts";
 import { quizResponseSchema as quizGeminiSchema } from "../lib/geminiSchemas.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedModel } from "../lib/validate.ts";
 
 /** ให้ AI สร้างข้อสอบปรนัยใหม่จาก products.json */
 export const quizRoute = new Hono<AppBindings>().post("/", async (c) => {
   const req = await parseBody(c, quizRequestSchema);
   const result = await generateJson(c.env, {
+    model: requestedModel(c),
     systemInstruction: buildQuizSystemPrompt(),
     contents: [{ role: "user", parts: [{ text: buildQuizUserPrompt(req.count, req.topic) }] }],
     responseSchema: quizGeminiSchema(req.count),

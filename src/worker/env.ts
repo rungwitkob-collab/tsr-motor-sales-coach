@@ -4,7 +4,7 @@ export interface Env {
   GEMINI_API_KEY?: string;
   /** Secret: รหัสผ่านทีมที่ TSR ต้องกรอกก่อนใช้งาน */
   APP_PASSCODE?: string;
-  /** ชื่อ model เช่น gemini-2.5-flash */
+  /** รุ่นเริ่มต้น เช่น gemini-3.5-flash-lite (หน้าเว็บเลือกรุ่นอื่นในรายการ src/shared/models.ts ได้) */
   GEMINI_MODEL?: string;
   /**
    * รุ่น TTS สำหรับเสียงลูกค้า เช่น gemini-3.8-flash-tts
@@ -24,8 +24,9 @@ export interface Env {
   ASSETS: Fetcher;
 }
 
-export const DEFAULT_MODEL = "gemini-2.5-flash";
+export const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
+/** รุ่นเริ่มต้นของ Worker (จาก GEMINI_MODEL ใน wrangler.jsonc) */
 export function modelName(env: Env): string {
   return env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 }

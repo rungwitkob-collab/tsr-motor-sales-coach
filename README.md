@@ -230,8 +230,10 @@ npm run deploy
 | `prompts/*.ts` | สำนวนและกติกาของ AI แต่ละโมดูล | แก้ได้ แต่ควรคงกติกาเรื่องไม่หลุดบทและห้ามแต่งตัวเลขทางกฎหมาย |
 | `src/shared/rubric.ts` | คำอธิบายเกณฑ์ 6 ด้าน | `key` ห้ามเปลี่ยน (ผูกกับ schema และสถิติ) |
 
-เปลี่ยนรุ่น AI: แก้ `"GEMINI_MODEL"` ใน `wrangler.jsonc` (เช่น `gemini-2.5-flash-lite` ซึ่งมักมีโควตา free tier สูงกว่า) แล้ว `npm run deploy`
-ให้ใช้เฉพาะรุ่นที่อยู่ใน free tier ตามหน้า rate limits ข้างต้น
+เปลี่ยนรุ่น AI: ผู้ใช้สลับได้เองจากหน้า **สถิติ → ตั้งค่า → รุ่น AI** (จำไว้ในเครื่องนั้น ไม่ต้อง deploy) รายการรุ่นที่เลือกได้อยู่ใน `src/shared/models.ts`
+(ปัจจุบัน `gemini-3.5-flash-lite` ประหยัดโควตา, `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-2.5-flash`) Worker รับเฉพาะรุ่นในรายการนี้
+ค่าเริ่มต้นเมื่อผู้ใช้ไม่ได้เลือกคือ `"GEMINI_MODEL"` ใน `wrangler.jsonc` (ตอนนี้ `gemini-3.5-flash-lite`) เปลี่ยนแล้วต้อง `npm run deploy`
+หมายเหตุ: `gemini-2.5-flash-lite` ถูก Google ปิดสำหรับผู้ใช้ใหม่แล้ว (404) ให้ใช้ `gemini-3.5-flash-lite` แทน
 
 ---
 
@@ -245,7 +247,7 @@ npm run deploy
 | Cloudflare Static Assets (หน้าเว็บ) | Free | ไม่จำกัด ไม่นับรวม 100,000 requests | ไฟล์หน้าเว็บไม่ผ่าน Worker |
 | URL `*.workers.dev` | Free | - | ไม่ต้องซื้อโดเมน |
 | Workers Logs (observability) | Free | มีโควตารายวัน | ดู log error ใน Dashboard |
-| Gemini API (`gemini-2.5-flash`) | Free tier | จำกัดต่อนาที (RPM) และต่อวัน (RPD) | ตรวจตัวเลขล่าสุดที่ ai.google.dev/gemini-api/docs/rate-limits |
+| Gemini API (ค่าเริ่มต้น `gemini-3.5-flash-lite`) | Free tier | จำกัดต่อนาที (RPM) และต่อวัน (RPD) แยกต่อรุ่น | ตัวเลขจริงของโปรเจกต์ดูที่ https://ai.dev/rate-limit ถ้ารุ่นหนึ่งเต็มสลับรุ่นได้จากหน้า สถิติ → ตั้งค่า |
 | เสียงลูกค้า/ข้ออ้าง (อ่านออกเสียง) | Gemini TTS (`gemini-3.8-flash-tts`) | ตามโควตา free tier ของรุ่น TTS | ประโยคเดิมถูก cache 1 วัน ถ้า AI ใช้ไม่ได้หน้าเว็บจะใช้เสียงอ่านของเบราว์เซอร์แทนอัตโนมัติ ปิดได้ด้วย `"GEMINI_TTS_MODEL": "off"` |
 | ไมค์ (พูดเป็นข้อความ) | Web Speech API ของเบราว์เซอร์ | ฟรี | ไม่ผ่าน Gemini |
 | ฟอนต์ Noto Sans Thai | Google Fonts | ฟรี | |
@@ -288,7 +290,7 @@ npm run deploy
 - **QUOTA_EXCEEDED (จาก Gemini)**
   - แบบต่อนาที: รอตามเวลาที่แสดง (มักไม่เกิน 1 นาที) แล้วกดลองใหม่
   - แบบรายวัน: โควตารีเซ็ตทุกเที่ยงคืนเวลาแปซิฟิก (ประมาณ 14:00-15:00 น. เวลาไทย) ระหว่างนี้ใช้ควิซชุดตั้งต้นและคลังสคริปต์ได้
-  - ถ้าเจอบ่อย: เปลี่ยนเป็นรุ่นที่โควตาสูงกว่า (เช่น `gemini-2.5-flash-lite`) หรือเปิด billing ของ Gemini
+  - ถ้าเจอบ่อย: สลับรุ่นจากหน้า สถิติ → ตั้งค่า (โควตาแยกต่อรุ่น เช่น `gemini-3.5-flash-lite` มักเหลือมากกว่า) หรือเปิด billing ของ Gemini
 - **RATE_LIMITED (จาก Worker ของเราเอง)**: IP เดียวกันส่งเกิน `RATE_LIMIT_PER_MINUTE` (ค่าเริ่มต้น 20/นาที) ถ้าทั้งทีมใช้ Wi-Fi ออฟฟิศเดียวกัน (IP เดียวกัน) ให้เพิ่มค่าใน `wrangler.jsonc` แล้ว deploy ใหม่
 
 ### ไมค์ไม่ทำงานบน iOS Safari

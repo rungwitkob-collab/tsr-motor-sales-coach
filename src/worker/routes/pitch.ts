@@ -6,7 +6,7 @@ import type { AppBindings } from "../env.ts";
 import { AppError } from "../lib/errors.ts";
 import { generateJson } from "../lib/gemini.ts";
 import { pitchResponseSchema } from "../lib/geminiSchemas.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedModel } from "../lib/validate.ts";
 
 /** สร้างบทพูด 30 วินาที + เวอร์ชันสั้น/ยาว ที่ปรับให้เข้ากับลูกค้า */
 export const pitchRoute = new Hono<AppBindings>().post("/", async (c) => {
@@ -15,6 +15,7 @@ export const pitchRoute = new Hono<AppBindings>().post("/", async (c) => {
 
   const planIds = products.plans.map((p) => p.id);
   const result = await generateJson(c.env, {
+    model: requestedModel(c),
     systemInstruction: buildPitchSystemPrompt(),
     contents: [{ role: "user", parts: [{ text: buildPitchUserPrompt(req) }] }],
     responseSchema: pitchResponseSchema(req.planId ? [req.planId] : planIds),
