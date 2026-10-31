@@ -1,0 +1,36 @@
+import { useEffect } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { Layout } from "./components/Layout.tsx";
+import { PasscodeGate } from "./components/PasscodeGate.tsx";
+import { initProgress } from "./lib/progress.ts";
+import { useHashRoute } from "./lib/router.ts";
+import { DashboardPage } from "./pages/DashboardPage.tsx";
+import { DrillPage } from "./pages/DrillPage.tsx";
+import { QuizPage } from "./pages/QuizPage.tsx";
+import { RoleplayPage } from "./pages/RoleplayPage.tsx";
+import { ScriptsPage } from "./pages/ScriptsPage.tsx";
+
+export default function App() {
+  const route = useHashRoute();
+
+  useEffect(() => {
+    void initProgress();
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <PasscodeGate>
+        <Layout active={route.path}>
+          {/* หน้าโทรถูก mount ค้างไว้ เพื่อไม่ให้สายหลุดเมื่อสลับไปเปิดสคริปต์ระหว่างคุย */}
+          <div hidden={route.path !== "/"}>
+            <RoleplayPage />
+          </div>
+          {route.path === "/drill" && <DrillPage key={route.params.get("focus") ?? "all"} focusParam={route.params.get("focus")} />}
+          {route.path === "/scripts" && <ScriptsPage />}
+          {route.path === "/quiz" && <QuizPage />}
+          {route.path === "/dashboard" && <DashboardPage />}
+        </Layout>
+      </PasscodeGate>
+    </ErrorBoundary>
+  );
+}

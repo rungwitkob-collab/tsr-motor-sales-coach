@@ -1,0 +1,10 @@
+# คัดลอกไฟล์นี้เป็น .dev.vars (ห้าม commit .dev.vars ลง git)
+#   cp .dev.vars.example .dev.vars
+# ใช้เฉพาะตอนรัน `npm run dev` บนเครื่องตัวเอง
+# ตอน deploy จริงให้ตั้งด้วย `npx wrangler secret put GEMINI_API_KEY` และ `npx wrangler secret put APP_PASSCODE`
+
+GEMINI_API_KEY=ใส่-API-key-จาก-Google-AI-Studio
+APP_PASSCODE=ตั้งรหัสผ่านทีม-เช่น-tsr2026
+
+# (ไม่บังคับ) เปลี่ยนรุ่น model ตอน dev
+# GEMINI_MODEL=gemini-2.5-flash

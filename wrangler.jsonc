@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // ชื่อ Worker = ส่วนหน้าของ URL -> https://coach.sales-tool.workers.dev (ถ้าใช้ subdomain สำรอง URL จะเป็น https://coach.<subdomain>.workers.dev)
+  "name": "coach",
+  "main": "src/worker/index.ts",
+  // วันที่ล่าสุดที่ workerd ใน wrangler เวอร์ชันที่ติดตั้งรองรับ (ถ้าใช้ 2026-10-31 คำสั่ง npm run dev จะเปิดไม่ขึ้น)
+  // อัปเดตได้ภายหลังเมื่ออัปเกรด wrangler: npm i -D wrangler@latest แล้วเปลี่ยนเป็นวันที่ปัจจุบัน
+  "compatibility_date": "2026-10-30",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Static Assets: หน้าเว็บ React ที่ build แล้ว (Vite plugin จะชี้ไปที่ dist/client ให้อัตโนมัติ)
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    // ให้ /api/* วิ่งเข้า Worker ก่อนเสมอ ส่วนไฟล์อื่นเสิร์ฟจาก assets โดยไม่เสีย CPU ของ Worker
+    "run_worker_first": ["/api/*"]
+  },
+  // ค่าที่ไม่ใช่ความลับ (secret จริงตั้งด้วย `npx wrangler secret put ...`)
+  "vars": {
+    "GEMINI_MODEL": "gemini-2.5-flash",
+    "RATE_LIMIT_PER_MINUTE": "20"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // (อนาคต) ถ้าต้องการเก็บสถิติบน Cloudflare KV ให้เพิ่ม:
+  // "kv_namespaces": [{ "binding": "PROGRESS_KV", "id": "<id จาก npx wrangler kv namespace create PROGRESS_KV>" }]
+}

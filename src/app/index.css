@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens ของ TSR Motor Sales Coach
+ * โทนม่วง + ทองแบบอ่อน นุ่มนวล (เครื่องมือฝึก ไม่ใช่แอปธนาคาร)
+ * ปิดพาเลตสีเริ่มต้นของ Tailwind ทั้งหมด (--color-*: initial) เพื่อบังคับให้ทุกหน้าใช้ token เหล่านี้เท่านั้น
+ *
+ * หมายเหตุ contrast (WCAG AA 4.5:1):
+ * - gold-500 / warning / brand-300 ใช้เป็นสีพื้น เส้น แถบ ป้าย เท่านั้น ห้ามใช้เป็นสีตัวอักษรบนพื้นอ่อน
+ * - ตัวอักษรสีสถานะให้ใช้ *-700 (ผ่าน AA ทั้งบนพื้นขาวและพื้นอ่อนของตัวเอง)
+ * - brand-500 เป็นตัวอักษรได้เฉพาะบนพื้นขาว (4.9:1) บน brand-50/100 ให้ใช้ brand-700
+ * - ink-muted ใช้บนพื้นขาว / brand-50 / gold-100 ได้ แต่ไม่ใช้บน brand-100
+ */
+@theme {
+  --color-*: initial;
+
+  --font-sans: "Noto Sans Thai", "IBM Plex Sans Thai", "Leelawadee UI", "Thonburi", system-ui, sans-serif;
+
+  /* Brand: ม่วง */
+  --color-brand-900: #3b1f6b; /* หัวเรื่องเข้ม / hover ปุ่มหลัก */
+  --color-brand-700: #5b3a9b; /* ปุ่มหลัก, active nav */
+  --color-brand-500: #7e5fc0; /* ลิงก์, ไอคอน, progress bar */
+  --color-brand-300: #b9a6df; /* border เน้น, chip, focus ring */
+  --color-brand-100: #ede6f7; /* card เน้น, bubble ลูกค้า AI */
+  --color-brand-50: #f7f3fc; /* พื้นหลังหน้าเว็บ */
+
+  /* Accent: ทอง */
+  --color-gold-700: #7e672e; /* ตัวอักษรทอง (ผ่าน AA บนพื้นขาว/gold-100/brand-50) */
+  --color-gold-500: #cba64a; /* คะแนนสูง, badge, streak, ดาว (สีพื้น/แถบ) */
+  --color-gold-100: #f6eeda; /* พื้นหลัง badge ทอง */
+
+  /* สถานะ */
+  --color-success: #2e8b6e;
+  --color-success-700: #287960;
+  --color-success-soft: #e6f4ef;
+  --color-warning: #d9962b;
+  --color-warning-700: #91641d;
+  --color-warning-soft: #fbf0df;
+  --color-danger: #c8463f; /* ธง compliance risk */
+  --color-danger-700: #b8403a;
+  --color-danger-soft: #fbe7e6;
+
+  /* ตัวอักษร / พื้นผิว */
+  --color-ink: #2b2340;
+  --color-ink-muted: #6e6584;
+  --color-white: #ffffff;
+  --color-line: #e6e0f0;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgb(59 31 107 / 0.05), 0 2px 8px rgb(59 31 107 / 0.06);
+  --shadow-float: 0 4px 16px rgb(59 31 107 / 0.12);
+
+  /* ไมค์กำลังฟัง: กระพริบเบา ๆ สี danger */
+  --animate-soft-pulse: soft-pulse 1.6s ease-in-out infinite;
+  @keyframes soft-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(200 70 63 / 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 12px rgb(200 70 63 / 0);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-brand-50 font-sans text-ink antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
