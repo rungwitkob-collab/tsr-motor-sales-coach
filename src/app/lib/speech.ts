@@ -51,6 +51,34 @@ export function isIOS(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
+/* ---- Audio Session API (Safari 17+) ----
+ * บน iOS เมื่อเปิดไมค์ (SpeechRecognition) ระบบจะสลับ audio session เป็นโหมดบันทึกเสียง
+ * ทำให้เสียง SpeechSynthesis หลังจากนั้นเบามาก/ออกลำโพงหู หรือเงียบไปเลย
+ * จึงประกาศชนิด session ให้ชัด: ตอนฟังไมค์ = play-and-record, ตอนให้ลูกค้าพูด = playback
+ * (playback ยังทำให้เสียงดังแม้เปิดสวิตช์ปิดเสียงของ iPhone) เบราว์เซอร์อื่นไม่มี API นี้จะข้ามไป
+ */
+type AudioSessionType = "auto" | "playback" | "transient" | "transient-solo" | "ambient" | "play-and-record";
+
+function setAudioSessionType(type: AudioSessionType): void {
+  if (typeof navigator === "undefined") return;
+  const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+  if (!session) return;
+  try {
+    session.type = type;
+  } catch {
+    // บางเวอร์ชันปฏิเสธค่าที่ไม่รู้จัก ไม่ต้องทำอะไร
+  }
+}
+
+/** ไมค์กำลังฟังอยู่หรือไม่ (ใช้กันไม่ให้ speak() สลับ session ไปเป็น playback ขณะไมค์ยังเปิด) */
+let recognitionActive = false;
+
+function recognitionFinished(): void {
+  if (!recognitionActive) return;
+  recognitionActive = false;
+  setAudioSessionType("playback");
+}
+
 const RECOGNITION_ERRORS: Record<string, string> = {
   "not-allowed": "ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์ หรือพิมพ์แทน",
   "service-not-allowed": "เบราว์เซอร์ไม่อนุญาตให้ใช้การรู้จำเสียง (บน iOS ให้เปิด Siri & Dictation) หรือพิมพ์แทน",
@@ -107,7 +135,10 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
       setError(RECOGNITION_ERRORS[event.error] ?? `ไมโครโฟนมีปัญหา (${event.error}) กรุณาพิมพ์แทน`);
     };
     rec.onend = () => {
+      // ถ้าถูก cancel/takeTranscript ไปก่อนแล้ว (recRef ถูกล้างหรือเป็น session ใหม่) ไม่ต้องทำอะไรซ้ำ
+      if (recRef.current !== rec) return;
       recRef.current = null;
+      recognitionFinished();
       setListening(false);
       const text = `${finalRef.current}${interimRef.current}`.trim();
       setInterim("");
@@ -115,10 +146,13 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     };
     recRef.current = rec;
     try {
+      recognitionActive = true;
+      setAudioSessionType("play-and-record");
       rec.start();
       setListening(true);
     } catch {
       recRef.current = null;
+      recognitionFinished();
       setError("เริ่มใช้ไมโครโฟนไม่ได้ กรุณาลองใหม่หรือพิมพ์แทน");
     }
   }, []);
@@ -130,7 +164,11 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
   const cancel = useCallback(() => {
     finalRef.current = "";
     interimRef.current = "";
-    recRef.current?.abort();
+    const rec = recRef.current;
+    recRef.current = null;
+    rec?.abort();
+    recognitionFinished();
+    setListening(false);
   }, []);
 
   const toggle = useCallback(() => {
@@ -149,6 +187,7 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     const rec = recRef.current;
     recRef.current = null;
     rec?.abort();
+    recognitionFinished();
     setListening(false);
     setInterim("");
     return text;
@@ -161,6 +200,7 @@ export function useSpeechSynthesis() {
   const [supported] = useState(() => typeof window !== "undefined" && "speechSynthesis" in window);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speaking, setSpeaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supported) return;
@@ -180,20 +220,35 @@ export function useSpeechSynthesis() {
     (text: string, gender: "male" | "female" = "female"): Promise<void> => {
       if (!supported || !text.trim()) return Promise.resolve();
       return new Promise<void>((resolve) => {
-        window.speechSynthesis.cancel();
+        const synth = window.speechSynthesis;
+        // เรียก cancel() เฉพาะเมื่อมีคิวค้างจริง: Safari/Chrome บางเวอร์ชันจะทิ้ง utterance ถัดไป
+        // แบบเงียบ ๆ ถ้า cancel() แล้ว speak() ติดกันโดยไม่จำเป็น
+        if (synth.speaking || synth.pending) synth.cancel();
+        // ไมค์ปิดแล้ว: ให้ iOS กลับไปใช้ session แบบเล่นเสียง (ออกลำโพงหลัก) ก่อนให้ลูกค้าพูด
+        if (!recognitionActive) setAudioSessionType("playback");
         const u = new SpeechSynthesisUtterance(text);
         u.lang = "th-TH";
         if (thaiVoice) u.voice = thaiVoice;
         u.rate = 1.0;
         u.pitch = gender === "female" ? 1.15 : 0.85;
+        let finished = false;
         const done = () => {
+          if (finished) return;
+          finished = true;
           setSpeaking(false);
           resolve();
         };
         u.onend = done;
-        u.onerror = done;
+        u.onerror = (event) => {
+          // "interrupted"/"canceled" คือเรายกเลิกเอง (เช่น TSR เริ่มพูดแทรก) ไม่ใช่ความผิดพลาด
+          if (event.error !== "interrupted" && event.error !== "canceled") {
+            setError(`เล่นเสียงลูกค้าไม่สำเร็จ (${event.error}) แตะปุ่มลำโพงที่ข้อความลูกค้าเพื่อฟังอีกครั้ง`);
+          }
+          done();
+        };
+        setError(null);
         setSpeaking(true);
-        window.speechSynthesis.speak(u);
+        synth.speak(u);
         // กันกรณีบางเบราว์เซอร์ไม่ยิง onend
         setTimeout(done, Math.min(30_000, 2_000 + text.length * 180));
       });
@@ -207,13 +262,28 @@ export function useSpeechSynthesis() {
     setSpeaking(false);
   }, [supported]);
 
-  /** iOS ต้องเรียก speak ครั้งแรกจาก user gesture จึงจะอ่านออกเสียงได้ */
+  /**
+   * iOS ต้องเรียก speak ครั้งแรกจาก user gesture จึงจะอ่านออกเสียงได้
+   * เรียกซ้ำได้จากทุกการแตะปุ่ม (เริ่มสาย/ส่ง/ไมค์) เพื่อรักษาสิทธิ์ไว้ ถ้ามีเสียงกำลังเล่นอยู่จะไม่แทรก
+   */
   const unlock = useCallback(() => {
     if (!supported) return;
+    const synth = window.speechSynthesis;
+    if (synth.speaking || synth.pending) return;
+    if (!recognitionActive) setAudioSessionType("playback");
     const u = new SpeechSynthesisUtterance(" ");
     u.volume = 0;
-    window.speechSynthesis.speak(u);
+    synth.speak(u);
   }, [supported]);
 
-  return { supported, hasThaiVoice: thaiVoice !== undefined, speaking, speak, cancel, unlock };
+  return {
+    supported,
+    hasThaiVoice: thaiVoice !== undefined,
+    speaking,
+    error,
+    speak,
+    cancel,
+    unlock,
+    clearError: useCallback(() => setError(null), []),
+  };
 }
