@@ -255,6 +255,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
               </div>
               {mic.listening && <p className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-700">กำลังฟัง... {mic.interim}</p>}
               {mic.error && <p className="mt-3 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700">{mic.error}</p>}
+              {readAloud && tts.error && <p className="mt-3 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700">เสียงอ่านข้ออ้าง: {tts.error}</p>}
               <div className="mt-3 flex items-end gap-2">
                 <MicButton
                   listening={mic.listening}

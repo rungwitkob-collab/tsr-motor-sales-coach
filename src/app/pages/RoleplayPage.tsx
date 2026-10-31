@@ -13,7 +13,7 @@ import { api, ApiError, isAbortError, streamRoleplay } from "../lib/api.ts";
 import { formatDuration } from "../lib/format.ts";
 import { newId, progressActions } from "../lib/progress.ts";
 import { navigate } from "../lib/router.ts";
-import { isIOS, useSpeechRecognition, useSpeechSynthesis } from "../lib/speech.ts";
+import { isIOS, thaiVoiceHint, useSpeechRecognition, useSpeechSynthesis } from "../lib/speech.ts";
 import { useLocalStorageState } from "../lib/useLocalStorage.ts";
 import { EvaluationView } from "./EvaluationView.tsx";
 
@@ -405,6 +405,16 @@ export function RoleplayPage() {
               {mic.error}
             </p>
           )}
+          {ttsOn && tts.error && (
+            <p className="mb-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700" role="alert">
+              เสียงลูกค้า: {tts.error}
+            </p>
+          )}
+          {ttsOn && tts.supported && tts.voicesLoaded && !tts.hasThaiVoice && (
+            <p className="mb-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700" role="alert">
+              เครื่องนี้ไม่มีเสียงอ่านภาษาไทย ลูกค้าจำลองจะเงียบหรือออกเสียงไม่ชัด {thaiVoiceHint()} (ระหว่างนี้ยังฝึกแบบอ่านข้อความได้ตามปกติ)
+            </p>
+          )}
           <div className="flex items-end gap-2">
             <MicButton
               listening={mic.listening}
@@ -452,7 +462,7 @@ export function RoleplayPage() {
               </label>
             )}
             {!mic.supported && <span>เบราว์เซอร์นี้ไม่รองรับการพูดผ่านไมค์ ใช้การพิมพ์แทนได้{isIOS() ? " (iOS: ลองใช้ Safari เวอร์ชันล่าสุด)" : ""}</span>}
-            {tts.supported && !tts.hasThaiVoice && ttsOn && <span>เครื่องนี้ไม่มีเสียงอ่านภาษาไทย เสียงอาจไม่ชัด</span>}
+            {!tts.supported && <span>เบราว์เซอร์นี้ไม่รองรับเสียงอ่าน ลูกค้าจะตอบเป็นข้อความอย่างเดียว</span>}
           </div>
         </div>
       </div>
