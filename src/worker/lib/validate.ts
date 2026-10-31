@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import type { z } from "zod";
-import { isAllowedModel, MODEL_HEADER } from "../../shared/models.ts";
-import { modelName, type Env } from "../env.ts";
+import { isAllowedModel, isAllowedTtsModel, MODEL_HEADER, TTS_MODEL_HEADER } from "../../shared/models.ts";
+import { modelName, ttsModelName, type Env } from "../env.ts";
 import { AppError } from "./errors.ts";
 
 /** อ่าน JSON body และ validate ด้วย zod ถ้าไม่ผ่านตอบ 400 พร้อมข้อความไทย */
@@ -25,4 +25,15 @@ export async function parseBody<S extends z.ZodType>(c: Context, schema: S): Pro
 export function requestedModel(c: Context<{ Bindings: Env }>): string {
   const wanted = c.req.header(MODEL_HEADER)?.trim();
   return isAllowedModel(wanted) ? wanted : modelName(c.env);
+}
+
+/**
+ * รุ่นเสียงลูกค้าที่หน้าเว็บขอมา (header) ถ้าไม่อยู่ในรายการให้ใช้ GEMINI_TTS_MODEL
+ * คืน null เมื่อปิดเสียงจาก AI ทั้งระบบ (GEMINI_TTS_MODEL = off) ไม่ว่าหน้าเว็บจะขอรุ่นไหน
+ */
+export function requestedTtsModel(c: Context<{ Bindings: Env }>): string | null {
+  const base = ttsModelName(c.env);
+  if (!base) return null;
+  const wanted = c.req.header(TTS_MODEL_HEADER)?.trim();
+  return isAllowedTtsModel(wanted) ? wanted : base;
 }

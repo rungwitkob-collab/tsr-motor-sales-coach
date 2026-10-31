@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { ttsRequestSchema } from "../../shared/schemas.ts";
-import { ttsModelName, type AppBindings } from "../env.ts";
+import type { AppBindings } from "../env.ts";
 import { AppError } from "../lib/errors.ts";
 import { generateSpeech } from "../lib/gemini.ts";
-import { parseBody } from "../lib/validate.ts";
+import { parseBody, requestedTtsModel } from "../lib/validate.ts";
 
 /**
  * เสียงลูกค้าจำลอง/ข้ออ้างจาก Gemini TTS (เสียงไทยเหมือนกันทุกเครื่อง ไม่พึ่งเสียงของเบราว์เซอร์)
@@ -25,7 +25,7 @@ async function cacheKey(model: string, voice: string, text: string): Promise<str
 }
 
 export const ttsRoute = new Hono<AppBindings>().post("/", async (c) => {
-  const model = ttsModelName(c.env);
+  const model = requestedTtsModel(c);
   if (!model) {
     throw new AppError(501, "NOT_CONFIGURED", "ปิดการใช้เสียงจาก AI อยู่ (GEMINI_TTS_MODEL = off) หน้าเว็บจะใช้เสียงของเบราว์เซอร์แทน");
   }

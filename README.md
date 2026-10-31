@@ -233,6 +233,7 @@ npm run deploy
 เปลี่ยนรุ่น AI: ผู้ใช้สลับได้เองจากหน้า **สถิติ → ตั้งค่า → รุ่น AI** (จำไว้ในเครื่องนั้น ไม่ต้อง deploy) รายการรุ่นที่เลือกได้อยู่ใน `src/shared/models.ts`
 (ปัจจุบัน `gemini-3.5-flash-lite` ประหยัดโควตา, `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-2.5-flash`) Worker รับเฉพาะรุ่นในรายการนี้
 ค่าเริ่มต้นเมื่อผู้ใช้ไม่ได้เลือกคือ `"GEMINI_MODEL"` ใน `wrangler.jsonc` (ตอนนี้ `gemini-3.5-flash-lite`) เปลี่ยนแล้วต้อง `npm run deploy`
+รุ่นเสียงลูกค้า (TTS) เป็นเมนูแยกในหน้าเดียวกัน รายการอยู่ใน `TTS_MODEL_OPTIONS` ค่าเริ่มต้นคือ `"GEMINI_TTS_MODEL"`
 หมายเหตุ: `gemini-2.5-flash-lite` ถูก Google ปิดสำหรับผู้ใช้ใหม่แล้ว (404) ให้ใช้ `gemini-3.5-flash-lite` แทน
 
 ---
@@ -248,7 +249,7 @@ npm run deploy
 | URL `*.workers.dev` | Free | - | ไม่ต้องซื้อโดเมน |
 | Workers Logs (observability) | Free | มีโควตารายวัน | ดู log error ใน Dashboard |
 | Gemini API (ค่าเริ่มต้น `gemini-3.5-flash-lite`) | Free tier | จำกัดต่อนาที (RPM) และต่อวัน (RPD) แยกต่อรุ่น | ตัวเลขจริงของโปรเจกต์ดูที่ https://ai.dev/rate-limit ถ้ารุ่นหนึ่งเต็มสลับรุ่นได้จากหน้า สถิติ → ตั้งค่า |
-| เสียงลูกค้า/ข้ออ้าง (อ่านออกเสียง) | Gemini TTS (`gemini-3.8-flash-tts`) | ตามโควตา free tier ของรุ่น TTS | ประโยคเดิมถูก cache 1 วัน ถ้า AI ใช้ไม่ได้หน้าเว็บจะใช้เสียงอ่านของเบราว์เซอร์แทนอัตโนมัติ ปิดได้ด้วย `"GEMINI_TTS_MODEL": "off"` |
+| เสียงลูกค้า/ข้ออ้าง (อ่านออกเสียง) | Gemini TTS (ค่าเริ่มต้น `gemini-3.8-flash-tts` สลับรุ่นได้จากหน้า สถิติ → ตั้งค่า) | ตามโควตา free tier ของรุ่น TTS | ประโยคเดิมถูก cache 1 วัน ถ้า AI ใช้ไม่ได้หน้าเว็บจะใช้เสียงอ่านของเบราว์เซอร์แทนอัตโนมัติ ปิดทั้งระบบได้ด้วย `"GEMINI_TTS_MODEL": "off"` |
 | ไมค์ (พูดเป็นข้อความ) | Web Speech API ของเบราว์เซอร์ | ฟรี | ไม่ผ่าน Gemini |
 | ฟอนต์ Noto Sans Thai | Google Fonts | ฟรี | |
 | เก็บสถิติ | localStorage ในเบราว์เซอร์ | ฟรี | ไม่มี database |

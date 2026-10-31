@@ -1,7 +1,7 @@
 /** เรียก API ของ Worker พร้อมแนบ passcode และแปลง error เป็นข้อความไทย */
 import type { ApiErrorBody, ApiErrorCode, EvaluateResponse, PersonasResponse } from "../../shared/api.ts";
 import { PASSCODE_HEADER, TRAINEE_HEADER } from "../../shared/limits.ts";
-import { isAllowedModel, MODEL_HEADER, MODEL_STORAGE_KEY } from "../../shared/models.ts";
+import { isAllowedModel, isAllowedTtsModel, MODEL_HEADER, MODEL_STORAGE_KEY, TTS_MODEL_HEADER, TTS_MODEL_STORAGE_KEY } from "../../shared/models.ts";
 import type {
   EvaluateRequest,
   ObjectionFeedback,
@@ -49,18 +49,30 @@ function buildHeaders(opts: RequestOptions): Headers {
   if (passcode) headers.set(PASSCODE_HEADER, encodeURIComponent(passcode));
   const model = getSelectedModel();
   if (model) headers.set(MODEL_HEADER, model);
+  const ttsModel = getSelectedTtsModel();
+  if (ttsModel) headers.set(TTS_MODEL_HEADER, ttsModel);
   return headers;
 }
 
-/** รุ่น Gemini ที่ผู้ใช้เลือกไว้ (หน้า สถิติ → ตั้งค่า) ว่าง = ใช้ค่าเริ่มต้นของ Worker */
-export function getSelectedModel(): string | null {
+function readStored(key: string): unknown {
   try {
-    const raw = localStorage.getItem(MODEL_STORAGE_KEY);
-    const parsed: unknown = raw === null ? null : JSON.parse(raw);
-    return isAllowedModel(parsed) ? parsed : null;
+    const raw = localStorage.getItem(key);
+    return raw === null ? null : (JSON.parse(raw) as unknown);
   } catch {
     return null;
   }
+}
+
+/** รุ่น Gemini สำหรับบทสนทนา/ประเมินที่ผู้ใช้เลือกไว้ (หน้า สถิติ → ตั้งค่า) null = ใช้ค่าเริ่มต้นของ Worker */
+export function getSelectedModel(): string | null {
+  const v = readStored(MODEL_STORAGE_KEY);
+  return isAllowedModel(v) ? v : null;
+}
+
+/** รุ่นเสียงลูกค้า (TTS) ที่ผู้ใช้เลือกไว้ null = ใช้ค่าเริ่มต้นของ Worker */
+export function getSelectedTtsModel(): string | null {
+  const v = readStored(TTS_MODEL_STORAGE_KEY);
+  return isAllowedTtsModel(v) ? v : null;
 }
 
 async function toApiError(res: Response, isPasscodeCheck: boolean): Promise<ApiError> {

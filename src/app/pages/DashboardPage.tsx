@@ -1,7 +1,7 @@
 /** โมดูล 6: Progress Dashboard (เก็บใน localStorage พร้อม export/import JSON) */
 import { useRef, useState, type ChangeEvent } from "react";
 import { findObjection } from "../../shared/content.ts";
-import { MODEL_OPTIONS, MODEL_STORAGE_KEY } from "../../shared/models.ts";
+import { MODEL_OPTIONS, MODEL_STORAGE_KEY, TTS_MODEL_OPTIONS, TTS_MODEL_STORAGE_KEY } from "../../shared/models.ts";
 import { difficultyLabel, RUBRIC, rubricItem } from "../../shared/rubric.ts";
 import { EmptyState } from "../components/Feedback.tsx";
 import { Icon, type IconName } from "../components/Icon.tsx";
@@ -38,6 +38,8 @@ export function DashboardPage() {
   // "" = ใช้รุ่นเริ่มต้นของ Worker (GEMINI_MODEL ใน wrangler.jsonc)
   const [model, setModel] = useLocalStorageState(MODEL_STORAGE_KEY, "");
   const selectedModel = MODEL_OPTIONS.find((m) => m.id === model) ?? MODEL_OPTIONS[0];
+  const [ttsModel, setTtsModel] = useLocalStorageState(TTS_MODEL_STORAGE_KEY, "");
+  const selectedTtsModel = TTS_MODEL_OPTIONS.find((m) => m.id === ttsModel) ?? TTS_MODEL_OPTIONS[0];
 
   const { calls, drills, quizzes } = progress;
   const streak = computeStreak(progress);
@@ -243,7 +245,7 @@ export function DashboardPage() {
           </div>
         </label>
         <label className="mt-4 block space-y-1.5">
-          <span className={ui.label}>รุ่น AI สำหรับลูกค้าจำลองและการประเมิน</span>
+          <span className={ui.label}>รุ่น AI สำหรับบทสนทนากับลูกค้าจำลอง การประเมิน ข้ออ้าง และควิซ</span>
           <select className={ui.input} value={selectedModel?.id ?? ""} onChange={(e) => setModel(e.target.value)} aria-label="เลือกรุ่น AI">
             {MODEL_OPTIONS.map((m) => (
               <option key={m.id} value={m.id}>
@@ -253,6 +255,19 @@ export function DashboardPage() {
           </select>
           <span className="block text-xs text-ink-muted">
             {selectedModel?.description} มีผลกับเครื่องนี้ทันที (ไม่ต้อง deploy ใหม่) ถ้ารุ่นที่เลือกแจ้งว่าโควตาเต็ม ให้สลับไปรุ่นอื่นชั่วคราว
+          </span>
+        </label>
+        <label className="mt-4 block space-y-1.5">
+          <span className={ui.label}>รุ่นเสียงลูกค้า (Text-to-Speech)</span>
+          <select className={ui.input} value={selectedTtsModel?.id ?? ""} onChange={(e) => setTtsModel(e.target.value)} aria-label="เลือกรุ่นเสียงลูกค้า">
+            {TTS_MODEL_OPTIONS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <span className="block text-xs text-ink-muted">
+            {selectedTtsModel?.description} โควตาเสียงแยกจากรุ่นบทสนทนา ถ้าเสียง AI ใช้ไม่ได้ระบบจะใช้เสียงอ่านของเบราว์เซอร์แทนชั่วคราว
           </span>
         </label>
         <button type="button" onClick={logout} className={`${ui.link} mt-4 text-sm`}>
