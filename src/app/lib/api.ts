@@ -11,6 +11,7 @@ import type {
   QuizRequest,
   QuizResponse,
   RoleplayRequest,
+  TtsRequest,
 } from "../../shared/schemas.ts";
 import { clearPasscode, getPasscode, notifyUnauthorized } from "./passcode.ts";
 
@@ -102,6 +103,11 @@ export const api = {
     request<ObjectionFeedback>("/api/objection", { body, signal }),
   pitch: (body: PitchRequest, signal?: AbortSignal) => request<PitchResult>("/api/pitch", { body, signal }),
   quiz: (body: QuizRequest, signal?: AbortSignal) => request<QuizResponse>("/api/quiz", { body, signal }),
+  /** เสียงลูกค้าจาก Gemini TTS (ไฟล์ WAV) */
+  tts: async (body: TtsRequest, signal?: AbortSignal): Promise<ArrayBuffer> => {
+    const res = await rawFetch("/api/tts", { body, signal });
+    return res.arrayBuffer();
+  },
   getProgress: (traineeId: string) =>
     request<{ progress: ProgressData | null }>("/api/progress", {
       headers: { [TRAINEE_HEADER]: encodeURIComponent(traineeId) },

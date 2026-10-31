@@ -345,18 +345,36 @@ export function RoleplayPage() {
         </Card>
 
         <div className="space-y-3" aria-live="polite">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "tsr" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
-                  m.role === "tsr" ? "rounded-br-md border border-brand-300 bg-white text-ink" : "rounded-bl-md bg-brand-100 text-ink"
-                }`}
-              >
-                <span className="mb-0.5 block text-[11px] font-semibold text-brand-700">{m.role === "tsr" ? "คุณ (TSR)" : persona.name}</span>
-                {m.text}
+          {messages.map((m, i) => {
+            // ปุ่มฟังซ้ำที่ข้อความลูกค้าล่าสุด: เรียก speak จากการแตะโดยตรง (user gesture) จึงใช้ได้แม้ iOS จะเงียบหลังใช้ไมค์
+            const canReplay = m.role === "customer" && i === messages.length - 1 && tts.supported && !busy && !hungUp;
+            return (
+              <div key={i} className={`flex ${m.role === "tsr" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
+                    m.role === "tsr" ? "rounded-br-md border border-brand-300 bg-white text-ink" : "rounded-bl-md bg-brand-100 text-ink"
+                  }`}
+                >
+                  <span className="mb-0.5 block text-[11px] font-semibold text-brand-700">{m.role === "tsr" ? "คุณ (TSR)" : persona.name}</span>
+                  {m.text}
+                  {canReplay && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (mic.listening) mic.cancel();
+                        void tts.speak(m.text, persona.gender);
+                      }}
+                      className="mt-1.5 flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900"
+                      aria-label="ฟังเสียงลูกค้าอีกครั้ง"
+                    >
+                      <Icon name="speaker" className="h-4 w-4" />
+                      {tts.speaking ? "กำลังพูด..." : "ฟังอีกครั้ง"}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {streamingText !== null && (
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-brand-100 px-4 py-2.5 text-[15px] leading-relaxed text-ink">
@@ -405,14 +423,9 @@ export function RoleplayPage() {
               {mic.error}
             </p>
           )}
-          {ttsOn && tts.error && (
+          {tts.error && ttsOn && (
             <p className="mb-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700" role="alert">
-              เสียงลูกค้า: {tts.error}
-            </p>
-          )}
-          {ttsOn && tts.supported && tts.voicesLoaded && !tts.hasThaiVoice && (
-            <p className="mb-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700" role="alert">
-              เครื่องนี้ไม่มีเสียงอ่านภาษาไทย ลูกค้าจำลองจะเงียบหรือออกเสียงไม่ชัด {thaiVoiceHint()} (ระหว่างนี้ยังฝึกแบบอ่านข้อความได้ตามปกติ)
+              {tts.error}
             </p>
           )}
           <div className="flex items-end gap-2">
@@ -422,6 +435,8 @@ export function RoleplayPage() {
               disabled={busy || hungUp || turnLimitReached}
               onClick={() => {
                 if (!mic.listening) tts.cancel();
+                // แตะเพื่อหยุดไมค์ = user gesture หลังใช้ไมค์ ใช้ต่ออายุสิทธิ์อ่านออกเสียงบน iOS
+                else tts.unlock();
                 mic.toggle();
               }}
             />
@@ -462,7 +477,12 @@ export function RoleplayPage() {
               </label>
             )}
             {!mic.supported && <span>เบราว์เซอร์นี้ไม่รองรับการพูดผ่านไมค์ ใช้การพิมพ์แทนได้{isIOS() ? " (iOS: ลองใช้ Safari เวอร์ชันล่าสุด)" : ""}</span>}
+            {ttsOn && tts.notice && <span className="text-warning-700">{tts.notice}</span>}
+            {ttsOn && tts.provider === "browser" && tts.voicesLoaded && !tts.hasThaiVoice && (
+              <span className="text-warning-700">เครื่องนี้ไม่มีเสียงอ่านภาษาไทยสำหรับเสียงสำรอง {thaiVoiceHint()}</span>
+            )}
             {!tts.supported && <span>เบราว์เซอร์นี้ไม่รองรับเสียงอ่าน ลูกค้าจะตอบเป็นข้อความอย่างเดียว</span>}
+            {ttsOn && isIOS() && <span>iPhone: ถ้าไม่ได้ยินเสียง แตะ "ฟังอีกครั้ง" ที่ข้อความลูกค้า และตรวจว่าไม่ได้ลดเสียงไว้</span>}
           </div>
         </div>
       </div>

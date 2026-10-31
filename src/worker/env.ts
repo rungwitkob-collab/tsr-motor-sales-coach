@@ -7,6 +7,11 @@ export interface Env {
   /** ชื่อ model เช่น gemini-2.5-flash */
   GEMINI_MODEL?: string;
   /**
+   * รุ่น TTS สำหรับเสียงลูกค้า เช่น gemini-3.8-flash-tts
+   * ใส่ "off" เพื่อปิด (หน้าเว็บจะใช้เสียงอ่านของเบราว์เซอร์แทน)
+   */
+  GEMINI_TTS_MODEL?: string;
+  /**
    * (ไม่บังคับ) เปลี่ยน endpoint ของ Gemini เช่นใช้ผ่าน Cloudflare AI Gateway:
    * https://gateway.ai.cloudflare.com/v1/<ACCOUNT_ID>/<GATEWAY>/google-ai-studio/v1beta/models
    */
@@ -23,6 +28,16 @@ export const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export function modelName(env: Env): string {
   return env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+}
+
+/** รุ่นที่เอกสารระบุว่ารองรับภาษาไทย (รุ่น flash-lite-tts ไม่มีไทยในตารางภาษา) */
+export const DEFAULT_TTS_MODEL = "gemini-3.8-flash-tts";
+
+/** คืน null เมื่อปิดเสียงจาก AI (GEMINI_TTS_MODEL = "off") */
+export function ttsModelName(env: Env): string | null {
+  const value = env.GEMINI_TTS_MODEL?.trim();
+  if (value && /^(off|none|false|0)$/i.test(value)) return null;
+  return value || DEFAULT_TTS_MODEL;
 }
 
 export type AppBindings = { Bindings: Env };

@@ -102,6 +102,13 @@ export const pitchRequestSchema = z.object({
 export type PitchRequest = z.input<typeof pitchRequestSchema>;
 export type PitchRequestParsed = z.output<typeof pitchRequestSchema>;
 
+/** ขอเสียงอ่านข้อความลูกค้า/ข้ออ้างจาก Gemini TTS */
+export const ttsRequestSchema = z.object({
+  text: z.string().trim().min(1, "ข้อความว่าง").max(LIMITS.maxCustomerMessageChars, "ข้อความยาวเกินกำหนด"),
+  gender: z.enum(["male", "female"]).default("female"),
+});
+export type TtsRequest = z.input<typeof ttsRequestSchema>;
+
 export const quizRequestSchema = z.object({
   count: z.number().int().min(1).max(LIMITS.maxQuizQuestions),
   topic: z.string().trim().max(100).optional(),

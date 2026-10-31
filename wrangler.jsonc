@@ -19,6 +19,8 @@
   // ค่าที่ไม่ใช่ความลับ (secret จริงตั้งด้วย `npx wrangler secret put ...`)
   "vars": {
     "GEMINI_MODEL": "gemini-2.5-flash",
+    // รุ่น TTS สำหรับเสียงลูกค้า (รองรับภาษาไทย) ใส่ "off" เพื่อกลับไปใช้เสียงอ่านของเบราว์เซอร์
+    "GEMINI_TTS_MODEL": "gemini-3.8-flash-tts",
     "RATE_LIMIT_PER_MINUTE": "20"
   },
   "observability": {
