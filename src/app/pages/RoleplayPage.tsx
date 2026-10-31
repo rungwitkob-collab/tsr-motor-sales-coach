@@ -84,6 +84,18 @@ export function RoleplayPage() {
     autoSendRef.current = autoSend;
   }, [autoSend]);
   const onVoiceFinal = useCallback((text: string) => {
+    if (text.length > LIMITS.maxTsrMessageChars) {
+      // พูดยาวเกินกำหนด: ไม่ส่งอัตโนมัติ แต่คงคำพูดไว้ในช่องพิมพ์ให้ตัดแล้วส่งเอง (คำพูดไม่หาย)
+      setInput(text.slice(0, LIMITS.maxTsrMessageChars));
+      setCallError(
+        new ApiError(
+          400,
+          "BAD_REQUEST",
+          `คำพูดยาวเกิน ${LIMITS.maxTsrMessageChars} ตัวอักษร ระบบตัดให้แล้วในช่องพิมพ์ กรุณาตรวจแล้วกดส่งเอง ครั้งหน้าลองพูดสั้นลงเหมือนคุยโทรศัพท์จริง`,
+        ),
+      );
+      return;
+    }
     if (autoSendRef.current) sendRef.current(text);
     else setInput((prev) => `${prev ? `${prev} ` : ""}${text}`.slice(0, LIMITS.maxTsrMessageChars));
   }, []);
@@ -188,7 +200,9 @@ export function RoleplayPage() {
     const text = raw.trim();
     if (!text || !persona || busyRef.current || phaseRef.current !== "call") return;
     if (text.length > LIMITS.maxTsrMessageChars) {
-      setCallError(new ApiError(400, "BAD_REQUEST", `ข้อความยาวเกิน ${LIMITS.maxTsrMessageChars} ตัวอักษร กรุณาพูดให้สั้นลงเหมือนคุยโทรศัพท์จริง`));
+      // คงข้อความ (ตัดให้พอดี) ไว้ในช่องพิมพ์ เพื่อให้ปุ่ม "ส่งข้อความอีกครั้ง" ใช้ได้และคำพูดไม่หาย
+      setInput(text.slice(0, LIMITS.maxTsrMessageChars));
+      setCallError(new ApiError(400, "BAD_REQUEST", `ข้อความยาวเกิน ${LIMITS.maxTsrMessageChars} ตัวอักษร ระบบตัดให้แล้ว กรุณาตรวจแล้วกดส่งอีกครั้ง`));
       return;
     }
     const current = messagesRef.current;

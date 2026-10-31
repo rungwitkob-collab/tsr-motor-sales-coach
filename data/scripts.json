@@ -8,7 +8,7 @@
       "scripts": [
         {
           "label": "มาตรฐาน",
-          "text": "สวัสดีค่ะ/ครับ ขอเรียนสาย{{customerName}}ค่ะ/ครับ ดิฉัน/ผมชื่อ{{agentName}} โทรจาก{{company}} {{licenseLabel}} {{licenseNumber}} ค่ะ/ครับ {{recordingNotice}}"
+          "text": "สวัสดีค่ะ/ครับ ขอเรียนสายคุณ{{customerName}}ค่ะ/ครับ ดิฉัน/ผมชื่อ{{agentName}} โทรจาก{{company}} {{licenseLabel}} {{licenseNumber}} ค่ะ/ครับ {{recordingNotice}}"
         },
         {
           "label": "ลูกค้าระแวงมิจฉาชีพ",

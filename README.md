@@ -142,7 +142,7 @@ Worker ทำหน้าที่เป็น proxy บาง ๆ ไป Gemini
 
 ### สิ่งที่ต้องมี
 
-- คอมพิวเตอร์ที่ติดตั้ง **Node.js 22 ขึ้นไป** (ดาวน์โหลดรุ่น LTS ที่ https://nodejs.org) ตรวจด้วย `node -v`
+- คอมพิวเตอร์ที่ติดตั้ง **Node.js 22.12 ขึ้นไป** (ดาวน์โหลดรุ่น LTS ที่ https://nodejs.org) ตรวจด้วย `node -v`
 - บัญชีอีเมลสำหรับสมัคร Cloudflare และบัญชี Google
 - เบราว์เซอร์ Chrome / Edge (รองรับไมค์ดีที่สุด) หรือ Safari
 
@@ -186,7 +186,7 @@ npx wrangler secret put GEMINI_API_KEY
 ```bash
 npx wrangler secret put APP_PASSCODE
 ```
-(ตั้งรหัสผ่านทีม เช่น `tsr2026` แจกให้ TSR ในทีมเท่านั้น ใช้ภาษาไทยได้)
+(รหัสผ่านทีมเป็นด่านเดียวที่กันคนนอกใช้โควตา Gemini ของทีม ให้ตั้งยาวอย่างน้อย 12-16 ตัวอักษรที่เดาไม่ได้ ห้ามใช้ชื่อทีม/บริษัท/ปี เช่น `tsr2026` จะใช้วลีภาษาไทยหลายคำก็ได้ หรือสร้างแบบสุ่มด้วย `openssl rand -base64 12` แจกให้ TSR ในทีมเท่านั้น และเปลี่ยนรหัสใหม่ด้วยคำสั่งเดิมทุกครั้งที่มีสมาชิกออกจากทีม)
 
 ก่อนรันบนเครื่อง ให้สร้างไฟล์ `.dev.vars` (secret สำหรับเครื่องตัวเองเท่านั้น):
 
@@ -223,7 +223,7 @@ npm run deploy
 | `data/company.json` | ชื่อบริษัท เลขที่ใบอนุญาต ช่องทางชำระ นโยบายยกเลิก | ใช้ทั้งใน UI และ prompt AI |
 | `data/products.json` | `plans[]` แผนประกัน (id, name, coverage, ทุน, ค่าเสียหายส่วนแรก, การซ่อม, ราคา, เหมาะกับใคร) และ `knowledge[]` ความรู้พื้นฐาน | `type` ต้องเป็น `voluntary` หรือ `compulsory` ถ้าเปลี่ยน `id` ของแผน Pitch Builder จะใช้ id ใหม่อัตโนมัติ ตัวเลขทุกตัวควรผ่านการตรวจของฝ่ายผลิตภัณฑ์ |
 | `data/personas.json` | ลูกค้าจำลอง: `name`, `title`, `gender` (`male`/`female`), `age`, `occupation`, `summary`, `personality`, `speakingStyle`, `greeting` (ประโยครับสาย) และ `hiddenProfile` (รถ ปีรถ ประกันเดิม งบ การใช้รถ painPoints decisionFactors willBuyIf hangUpIf) | `id` ห้ามซ้ำ ข้อมูลใน `hiddenProfile` จะไม่ถูกส่งไปหน้าเว็บจนกว่าจะจบสาย |
-| `data/objections.json` | `groups[]` หมวด และ `objections[]` ข้ออ้าง (`id`, `group`, `text`, `hint`) | `group` ต้องตรงกับ id ใน `groups` ส่วน `hint` คือแนวทางจากหัวหน้าทีมที่ AI ใช้ประกอบการให้คะแนน |
+| `data/objections.json` | `groups[]` หมวด และ `objections[]` ข้ออ้าง (`id`, `group`, `text`, `hint`) | `group` ต้องตรงกับ id ใน `groups` ส่วน `hint` คือแนวทางจากหัวหน้าทีมที่ AI ใช้ประกอบการให้คะแนน **อย่าเปลี่ยน `id` ของหมวดเดิม** (price, has-insurance, distrust, no-time, think-first, ask-others, bad-claim, no-need) เพราะโหมด "ฝึกจุดอ่อน" อ้างถึง id เหล่านี้ใน `src/shared/rubric.ts` เพิ่มหมวดใหม่ได้ แต่ถ้าเปลี่ยนชื่อ id ต้องแก้ `SKILL_TO_OBJECTION_GROUPS` ด้วย |
 | `data/scripts.json` | สคริปต์มาตรฐาน ใช้ตัวแปร `{{company}}` `{{licenseNumber}}` `{{agentName}}` `{{customerName}}` ฯลฯ | ข้อความใน `[ ]` คือส่วนที่ TSR ต้องปรับเอง |
 | `prompts/*.ts` | สำนวนและกติกาของ AI แต่ละโมดูล | แก้ได้ แต่ควรคงกติกาเรื่องไม่หลุดบทและห้ามแต่งตัวเลขทางกฎหมาย |
 | `src/shared/rubric.ts` | คำอธิบายเกณฑ์ 6 ด้าน | `key` ห้ามเปลี่ยน (ผูกกับ schema และสถิติ) |
@@ -311,7 +311,7 @@ npm run deploy
 | "ข้อความติดตัวกรองความปลอดภัย" | AI ปฏิเสธข้อความที่หยาบหรือไม่เหมาะสม ให้เรียบเรียงใหม่ |
 | "AI ตอบกลับในรูปแบบที่ไม่ถูกต้อง" | ระบบลองซ่อม JSON ให้แล้ว 1 ครั้ง กดลองใหม่อีกครั้ง |
 | `npm run dev` แจ้ง "requires compatibility date ..." | `compatibility_date` ใน `wrangler.jsonc` ใหม่กว่าที่ wrangler ในเครื่องรองรับ ให้รัน `npm i -D wrangler@latest @cloudflare/vite-plugin@latest` หรือลดวันที่ลง |
-| `npm install` แจ้งเรื่อง Node version | ติดตั้ง Node.js 22 ขึ้นไป |
+| `npm install` แจ้งเรื่อง Node version | ติดตั้ง Node.js 22.12 ขึ้นไป (Vite 8 และ wrangler 4 ต้องการรุ่นนี้) |
 
 ---
 
@@ -400,7 +400,7 @@ MVP เก็บสถิติใน localStorage แต่เตรียม i
 
 1. `npx wrangler kv namespace create PROGRESS_KV` แล้วคัดลอก id
 2. เพิ่มใน `wrangler.jsonc`: `"kv_namespaces": [{ "binding": "PROGRESS_KV", "id": "<id>" }]`
-3. build ด้วย `VITE_PROGRESS_BACKEND=kv npm run deploy`
+3. สร้างไฟล์ `.env` ที่ root ของโปรเจกต์ ใส่บรรทัด `VITE_PROGRESS_BACKEND=kv` แล้วรัน `npm run deploy` ตามปกติ (Vite อ่าน `.env` ตอน build อัตโนมัติ และ `.gitignore` กันไฟล์นี้ไว้แล้ว ใช้ได้ทุกระบบปฏิบัติการ) ถ้าอยากตั้งแบบครั้งเดียวแทนไฟล์: macOS/Linux ใช้ `VITE_PROGRESS_BACKEND=kv npm run deploy`, PowerShell ใช้ `$env:VITE_PROGRESS_BACKEND="kv"; npm run deploy`, CMD ใช้ `set VITE_PROGRESS_BACKEND=kv && npm run deploy`
 4. ผู้ฝึกต้องกรอก "ชื่อเล่น / รหัสพนักงาน" สถิติจะซิงก์ตามชื่อนั้น (ไม่มีระบบ login จริง ใครรู้รหัสทีมและชื่อก็ดูได้)
 
 KV free tier เขียนได้ 1,000 ครั้ง/วัน (ระบบหน่วงการเขียน 5 วินาทีเพื่อประหยัด) ถ้าทีมใหญ่ควรใช้ Workers Paid

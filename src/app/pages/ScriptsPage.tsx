@@ -32,7 +32,7 @@ export function ScriptsPage() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+            className={`min-h-11 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
               tab === key ? "bg-brand-700 text-white" : "text-brand-700 hover:bg-brand-50"
             }`}
           >

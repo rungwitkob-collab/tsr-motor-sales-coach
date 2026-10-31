@@ -50,7 +50,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
     setAnswer((prev) => `${prev ? `${prev} ` : ""}${text}`.slice(0, LIMITS.maxDrillAnswerChars));
   }, []);
   const mic = useSpeechRecognition(onVoice);
-  const stopMic = mic.stop;
+  const takeTranscript = mic.takeTranscript;
   const cancelSpeech = tts.cancel;
 
   const reviewIds = progress.reviewObjectionIds.filter((id) => findObjection(id));
@@ -88,7 +88,14 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
     async (objection: Objection, answerText: string, taken: number) => {
       if (submittingRef.current) return;
       submittingRef.current = true;
-      stopMic();
+      // รวมคำพูดที่ไมค์ยังฟังค้างอยู่ (ยังไม่ถึง onend) เข้ากับคำตอบ แล้วหยุดไมค์ทันที
+      const live = takeTranscript();
+      const finalAnswer = [answerText, live]
+        .filter((s) => s.trim())
+        .join(" ")
+        .trim()
+        .slice(0, LIMITS.maxDrillAnswerChars);
+      setAnswer(finalAnswer);
       cancelSpeech();
       setTimeTaken(taken);
       setPhase("grading");
@@ -96,7 +103,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
       try {
         const feedback = await api.objection({
           objectionId: objection.id,
-          answer: answerText.trim(),
+          answer: finalAnswer,
           timeTakenSec: taken,
           timeLimitSec: timeLimit,
           focusSkill: focus ?? undefined,
@@ -116,7 +123,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
         submittingRef.current = false;
       }
     },
-    [focus, timeLimit, stopMic, cancelSpeech],
+    [focus, timeLimit, takeTranscript, cancelSpeech],
   );
 
   // นับถอยหลัง เมื่อหมดเวลาส่งคำตอบอัตโนมัติ
@@ -177,7 +184,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
               <select
                 value={timeLimit}
                 onChange={(e) => setTimeLimit(Number(e.target.value))}
-                className="rounded-lg border border-line bg-white px-2 py-1 text-ink focus:ring-2 focus:ring-brand-300 focus:outline-none"
+                className="rounded-lg border border-line bg-white px-2 py-1 text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-300 focus:outline-none"
               >
                 {TIME_OPTIONS.map((t) => (
                   <option key={t} value={t}>
@@ -227,7 +234,13 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
           <div className="flex items-start gap-2">
             <p className="flex-1 text-xl font-semibold text-ink">"{current.text}"</p>
             {tts.supported && (
-              <button type="button" onClick={() => void tts.speak(current.text, "female")} className="rounded-lg p-2 text-brand-500 hover:bg-brand-50" aria-label="ฟังอีกครั้ง">
+              <button
+                type="button"
+                onClick={() => void tts.speak(current.text, "female")}
+                disabled={mic.listening}
+                className="rounded-lg p-2 text-brand-500 hover:bg-brand-50 disabled:opacity-40"
+                aria-label="ฟังอีกครั้ง"
+              >
                 <Icon name="speaker" className="h-5 w-5" />
               </button>
             )}
@@ -243,7 +256,15 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
               {mic.listening && <p className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-700">กำลังฟัง... {mic.interim}</p>}
               {mic.error && <p className="mt-3 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-700">{mic.error}</p>}
               <div className="mt-3 flex items-end gap-2">
-                <MicButton listening={mic.listening} supported={mic.supported} onClick={mic.toggle} />
+                <MicButton
+                  listening={mic.listening}
+                  supported={mic.supported}
+                  onClick={() => {
+                    // หยุดเสียงอ่านข้ออ้างก่อนเปิดไมค์ ไม่ให้ไมค์เก็บเสียง TTS เข้าคำตอบ
+                    if (!mic.listening) tts.cancel();
+                    mic.toggle();
+                  }}
+                />
                 <textarea
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value.slice(0, LIMITS.maxDrillAnswerChars))}
@@ -256,7 +277,7 @@ export function DrillPage({ focusParam }: { focusParam: string | null }) {
               <button
                 type="button"
                 onClick={() => void submit(current, answer, Math.round((Date.now() - startedAt.current) / 1000))}
-                disabled={!answer.trim()}
+                disabled={!answer.trim() && !mic.interim.trim()}
                 className={`${ui.btnPrimary} mt-3 w-full`}
               >
                 ส่งคำตอบ

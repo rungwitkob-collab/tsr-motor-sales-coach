@@ -204,7 +204,9 @@ export async function streamRoleplay(
     if (buffer) handleLine(buffer);
   } catch (err) {
     if (timedOut) throw new ApiError(504, "TIMEOUT", "ลูกค้าตอบช้าเกินไป (AI ไม่ตอบภายใน 30 วินาที) กรุณาส่งข้อความอีกครั้ง");
-    throw err;
+    if (err instanceof ApiError || isAbortError(err)) throw err;
+    // การเชื่อมต่อหลุดกลาง stream (reader.read ล้มเหลว) ให้เป็นข้อความไทยเหมือน error เครือข่ายอื่น
+    throw new ApiError(0, "NETWORK_ERROR", NETWORK_MESSAGE);
   } finally {
     if (idleTimer) clearTimeout(idleTimer);
     handlers.signal?.removeEventListener("abort", onExternalAbort);

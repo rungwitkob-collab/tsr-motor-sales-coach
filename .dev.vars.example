@@ -4,7 +4,7 @@
 # ตอน deploy จริงให้ตั้งด้วย `npx wrangler secret put GEMINI_API_KEY` และ `npx wrangler secret put APP_PASSCODE`
 
 GEMINI_API_KEY=ใส่-API-key-จาก-Google-AI-Studio
-APP_PASSCODE=ตั้งรหัสผ่านทีม-เช่น-tsr2026
+APP_PASSCODE=รหัสทีมยาวอย่างน้อย-12-ตัวอักษรที่เดาไม่ได้-ห้ามใช้ชื่อทีมหรือปี
 
 # (ไม่บังคับ) เปลี่ยนรุ่น model ตอน dev
 # GEMINI_MODEL=gemini-2.5-flash

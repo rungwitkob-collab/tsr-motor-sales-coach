@@ -13,7 +13,7 @@ export const ui = {
   /** ปุ่มเน้นทอง (เช่น ฝึกจุดอ่อน) */
   btnGold: `${btnBase} border border-gold-500 bg-gold-100 px-4 py-3 text-brand-900 hover:bg-gold-500/40`,
   /** ปุ่มอันตราย (จบสาย) */
-  btnDanger: `${btnBase} bg-danger px-3 py-2.5 text-white shadow-card hover:bg-danger-700`,
+  btnDanger: `${btnBase} min-h-11 bg-danger px-3 py-2.5 text-white shadow-card hover:bg-danger-700`,
   /** ปุ่มขนาดใหญ่สำหรับ call-to-action หลักของหน้า */
   btnHero: `${btnBase} w-full bg-brand-700 px-6 py-4 text-lg text-white shadow-float hover:bg-brand-900 disabled:bg-brand-100 disabled:text-ink-muted disabled:shadow-none`,
   /** ลิงก์ข้อความ */

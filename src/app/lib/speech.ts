@@ -138,7 +138,23 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     else start();
   }, [start, stop]);
 
-  return { supported, listening, interim, error, start, stop, cancel, toggle, clearError: () => setError(null) };
+  /**
+   * ดึงข้อความที่ฟังได้จนถึงตอนนี้ (รวมส่วนที่ยังไม่ final) แบบ synchronous แล้วหยุดไมค์ทันที
+   * ใช้ตอนหมดเวลา/กดส่งขณะไมค์ยังฟังอยู่ เพื่อไม่ให้คำพูดหายหรือ onFinal มา append ซ้ำทีหลัง
+   */
+  const takeTranscript = useCallback((): string => {
+    const text = `${finalRef.current}${interimRef.current}`.trim();
+    finalRef.current = "";
+    interimRef.current = "";
+    const rec = recRef.current;
+    recRef.current = null;
+    rec?.abort();
+    setListening(false);
+    setInterim("");
+    return text;
+  }, []);
+
+  return { supported, listening, interim, error, start, stop, cancel, toggle, takeTranscript, clearError: () => setError(null) };
 }
 
 export function useSpeechSynthesis() {
