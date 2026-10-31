@@ -116,7 +116,7 @@ export function DashboardPage() {
         <StatTile icon="phone" label="สายที่ฝึก" value={String(calls.length)} sub={calls.length ? `ล่าสุด ${formatThaiDate(calls[calls.length - 1]!.date)}` : "ยังไม่มี"} />
         <StatTile icon="chart" label="คะแนนเฉลี่ย 10 สายล่าสุด" value={recentAvg === null ? "-" : String(recentAvg)} sub="เต็ม 100" />
         <StatTile
-          icon="bolt"
+          icon="flame"
           label="Streak รายวัน"
           value={`${streak.current} วัน`}
           sub={streak.practicedToday ? `ฝึกแล้ววันนี้ · สูงสุด ${streak.best} วัน` : `วันนี้ยังไม่ได้ฝึก · สูงสุด ${streak.best} วัน`}
