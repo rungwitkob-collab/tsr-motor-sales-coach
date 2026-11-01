@@ -10,6 +10,7 @@ const NAV: { path: RoutePath; label: string; icon: IconName }[] = [
   { path: "/scripts", label: "สคริปต์", icon: "doc" },
   { path: "/quiz", label: "ควิซ", icon: "check" },
   { path: "/dashboard", label: "สถิติ", icon: "chart" },
+  { path: "/settings", label: "ตั้งค่า", icon: "sliders" },
 ];
 
 export function Layout({ active, children }: { active: RoutePath; children: ReactNode }) {
@@ -57,7 +58,7 @@ export function Layout({ active, children }: { active: RoutePath; children: Reac
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
         aria-label="เมนูหลัก"
       >
-        <div className="mx-auto grid max-w-md grid-cols-5">
+        <div className="mx-auto grid max-w-md grid-cols-6">
           {NAV.map((item) => (
             <a
               key={item.path}

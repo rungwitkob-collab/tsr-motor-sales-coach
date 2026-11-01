@@ -1,7 +1,17 @@
 /** เรียก API ของ Worker พร้อมแนบ passcode และแปลง error เป็นข้อความไทย */
 import type { ApiErrorBody, ApiErrorCode, EvaluateResponse, PersonasResponse } from "../../shared/api.ts";
 import { PASSCODE_HEADER, TRAINEE_HEADER } from "../../shared/limits.ts";
-import { isAllowedModel, isAllowedTtsModel, MODEL_HEADER, MODEL_STORAGE_KEY, TTS_MODEL_HEADER, TTS_MODEL_STORAGE_KEY } from "../../shared/models.ts";
+import {
+  DEFAULT_VOICE_PREFERENCE,
+  isAllowedModel,
+  isAllowedTtsModel,
+  MODEL_HEADER,
+  MODEL_STORAGE_KEY,
+  TTS_MODEL_HEADER,
+  TTS_MODEL_STORAGE_KEY,
+  VOICE_STORAGE_KEY,
+  type VoicePreference,
+} from "../../shared/models.ts";
 import type {
   EvaluateRequest,
   ObjectionFeedback,
@@ -73,6 +83,11 @@ export function getSelectedModel(): string | null {
 export function getSelectedTtsModel(): string | null {
   const v = readStored(TTS_MODEL_STORAGE_KEY);
   return isAllowedTtsModel(v) ? v : null;
+}
+
+/** แหล่งเสียงลูกค้าที่เลือกในหน้าตั้งค่า: "ai" (Gemini TTS) หรือ "browser" (เสียงของเครื่อง) */
+export function getVoicePreference(): VoicePreference {
+  return readStored(VOICE_STORAGE_KEY) === "browser" ? "browser" : DEFAULT_VOICE_PREFERENCE;
 }
 
 async function toApiError(res: Response, isPasscodeCheck: boolean): Promise<ApiError> {

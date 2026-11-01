@@ -9,6 +9,7 @@ import { DrillPage } from "./pages/DrillPage.tsx";
 import { QuizPage } from "./pages/QuizPage.tsx";
 import { RoleplayPage } from "./pages/RoleplayPage.tsx";
 import { ScriptsPage } from "./pages/ScriptsPage.tsx";
+import { SettingsPage } from "./pages/SettingsPage.tsx";
 
 export default function App() {
   const route = useHashRoute();
@@ -38,6 +39,7 @@ export default function App() {
           {route.path === "/scripts" && <ScriptsPage />}
           {route.path === "/quiz" && <QuizPage />}
           {route.path === "/dashboard" && <DashboardPage />}
+          {route.path === "/settings" && <SettingsPage />}
         </Layout>
       </PasscodeGate>
     </ErrorBoundary>

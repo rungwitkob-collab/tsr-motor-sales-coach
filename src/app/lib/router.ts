@@ -1,7 +1,7 @@
 /** hash router ขนาดเล็ก (#/drill?focus=closing) ไม่ต้องตั้งค่า server เพิ่ม */
 import { useEffect, useState } from "react";
 
-export const ROUTES = ["/", "/drill", "/scripts", "/quiz", "/dashboard"] as const;
+export const ROUTES = ["/", "/drill", "/scripts", "/quiz", "/dashboard", "/settings"] as const;
 export type RoutePath = (typeof ROUTES)[number];
 
 export interface Route {

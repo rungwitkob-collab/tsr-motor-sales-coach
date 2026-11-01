@@ -5,7 +5,7 @@
  * ถ้าไม่รองรับ หน้าเว็บจะใช้การพิมพ์แทนเสมอ
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError, isAbortError } from "./api.ts";
+import { api, ApiError, getVoicePreference, isAbortError } from "./api.ts";
 
 /* ---- Minimal typings (lib.dom ของ TypeScript ยังไม่มี SpeechRecognition) ---- */
 interface RecognitionAlternative {
@@ -312,7 +312,8 @@ export function useSpeechSynthesis() {
 
   /** เล่นเสียงจาก Gemini TTS คืน true เมื่อจัดการแล้ว (เล่นจบ/ถูกแทรก) คืน false ให้ใช้เสียงเบราว์เซอร์แทน */
   const speakWithAi = useCallback(async (text: string, gender: Gender, token: number): Promise<boolean> => {
-    if (aiTtsDisabled) return false;
+    // ผู้ใช้เลือก "ใช้ Windows voice" ในหน้าตั้งค่า หรือ Worker ปิดเสียง AI ไว้ -> ใช้เสียงเครื่องโดยไม่เรียก API
+    if (aiTtsDisabled || getVoicePreference() === "browser") return false;
     const ctx = getAudioContext();
     if (!ctx) return false;
     if (!recognitionActive) setAudioSessionType("playback");

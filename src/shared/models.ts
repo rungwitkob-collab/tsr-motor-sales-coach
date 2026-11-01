@@ -1,5 +1,5 @@
 /**
- * รุ่น Gemini ที่หน้าเว็บเลือกได้ (สลับได้ทันทีจากหน้า "สถิติ → ตั้งค่า" ไม่ต้อง deploy ใหม่)
+ * รุ่น Gemini ที่หน้าเว็บเลือกได้ (สลับได้ทันทีจากเมนู "ตั้งค่า" ไม่ต้อง deploy ใหม่)
  * Worker รับเฉพาะรุ่นในรายการนี้เท่านั้น รุ่นอื่นจะใช้ค่าเริ่มต้นจาก wrangler.jsonc (GEMINI_MODEL)
  * รุ่นเสียงลูกค้า (TTS) เป็นอีกรายการหนึ่ง (TTS_MODEL_OPTIONS) ค่าเริ่มต้นจาก GEMINI_TTS_MODEL
  */
@@ -77,3 +77,41 @@ export function isAllowedTtsModel(id: unknown): id is string {
 
 export const TTS_MODEL_HEADER = "X-Gemini-Tts-Model";
 export const TTS_MODEL_STORAGE_KEY = "tsr.ttsModel";
+
+/* ------------------------------------------------------------------ */
+/* ตัวเลือกในหน้า "ตั้งค่า" (เก็บต่อเครื่องใน localStorage)               */
+/* ------------------------------------------------------------------ */
+
+/** แหล่งเสียงลูกค้า: "ai" = Gemini TTS, "browser" = เสียงอ่านของเครื่อง (Windows/iPhone/Android) */
+export type VoicePreference = "ai" | "browser";
+export const VOICE_STORAGE_KEY = "tsr.voice";
+export const DEFAULT_VOICE_PREFERENCE: VoicePreference = "ai";
+
+/** ตัวเลือกเสียงลูกค้าที่แสดงในหน้าตั้งค่า */
+export const VOICE_CHOICES: readonly { id: VoicePreference; label: string; description: string; ttsModel?: string }[] = [
+  {
+    id: "ai",
+    label: "ใช้ Gemini 3.8",
+    description: "เสียงไทยจาก Gemini TTS ชัดและเหมือนกันทุกเครื่อง ใช้โควตา Gemini เพิ่ม 1 คำขอต่อคำตอบของลูกค้า (ค่าเริ่มต้น)",
+    ttsModel: "gemini-3.8-flash-tts",
+  },
+  {
+    id: "browser",
+    label: "ใช้ Windows voice",
+    description: "เสียงอ่านที่ติดมากับเครื่อง (Windows / iPhone / Android) ฟรี ไม่กินโควตา แต่สำเนียงและการอ่านขึ้นกับเครื่อง",
+  },
+];
+
+/** ตัวเลือกรุ่น AI ประเมินการทดสอบ (และลูกค้าจำลอง ข้ออ้าง ควิซ) ที่แสดงในหน้าตั้งค่า */
+export const EVAL_MODEL_CHOICES: readonly { id: string; label: string; description: string }[] = [
+  {
+    id: "gemini-3.5-flash-lite",
+    label: "ใช้ Gemini 3.5",
+    description: "Flash-Lite ตอบเร็ว ประหยัดโควตา เหมาะกับการฝึกประจำวัน (ค่าเริ่มต้น)",
+  },
+  {
+    id: "gemini-3.8-flash",
+    label: "ใช้ Gemini 3.8",
+    description: "รุ่นใหม่กว่า ประเมินละเอียดและแม่นยำกว่า แต่ใช้โควตามากกว่าและอาจช้ากว่าในช่วงหนาแน่น",
+  },
+];
