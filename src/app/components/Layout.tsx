@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { company } from "../../shared/content.ts";
-import type { RoutePath } from "../lib/router.ts";
+import { goHome, type RoutePath } from "../lib/router.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import { ui } from "./ui.ts";
 
@@ -17,7 +17,16 @@ export function Layout({ active, children }: { active: RoutePath; children: Reac
     <div className="min-h-dvh bg-brand-50">
       <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
-          <a href="#/" className="min-w-0">
+          <a
+            href="#/"
+            onClick={(e) => {
+              // กดชื่อแอป/ชื่อบริษัทแล้วกลับหน้าแรกเสมอ แม้อยู่ที่ #/ อยู่แล้ว (เช่น หน้าผลประเมิน) ให้รีเซ็ตหน้าฝึกโทรด้วย
+              e.preventDefault();
+              goHome();
+            }}
+            className="min-w-0 rounded-lg transition hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            aria-label="กลับหน้าแรก"
+          >
             <p className="truncate text-base font-bold text-brand-900 sm:text-lg">TSR Motor Sales Coach</p>
             <p className="truncate text-xs text-ink-muted">{company.name}</p>
           </a>
@@ -39,7 +48,10 @@ export function Layout({ active, children }: { active: RoutePath; children: Reac
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 pt-4 pb-28 md:pb-10">{children}</main>
+      <main className="mx-auto max-w-4xl px-4 pt-4 pb-28 md:pb-10">
+        {children}
+        <footer className="mt-10 border-t border-line pt-4 text-center text-xs text-ink-muted">Powered by Business Technology</footer>
+      </main>
 
       <nav
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden"

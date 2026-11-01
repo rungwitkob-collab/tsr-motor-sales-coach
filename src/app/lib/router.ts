@@ -33,3 +33,13 @@ export function navigate(path: RoutePath, params?: Record<string, string>): void
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
   window.location.hash = `${path}${query}`;
 }
+
+/** event ที่ App ใช้รีเซ็ตหน้าฝึกโทรกลับไปหน้าเลือกลูกค้า เมื่อกดชื่อแอปขณะอยู่ที่หน้าแรกอยู่แล้ว */
+export const HOME_EVENT = "tsr:home";
+
+/** กลับหน้าแรก (หน้าฝึกโทร) และรีเซ็ตหน้านั้นให้เริ่มใหม่ ใช้กับลิงก์ชื่อแอป/ชื่อบริษัทที่หัวเว็บ */
+export function goHome(): void {
+  const atHome = window.location.hash === "" || window.location.hash === "#/" || window.location.hash === "#";
+  if (!atHome) window.location.hash = "/";
+  window.dispatchEvent(new Event(HOME_EVENT));
+}
