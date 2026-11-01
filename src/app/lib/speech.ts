@@ -253,7 +253,8 @@ const TTS_ERRORS: Record<string, string> = {
 export function thaiVoiceHint(): string {
   if (typeof navigator === "undefined") return "";
   const ua = navigator.userAgent;
-  if (/Windows/i.test(ua)) return "Windows: Settings → Time & Language → Speech → Add voices → เลือก Thai แล้วเปิดหน้านี้ใหม่";
+  if (/Windows/i.test(ua))
+    return "Windows: Settings → Time & language → Language & region → Add a language → Thai แล้วติ๊ก Text-to-speech (บางเครื่องอยู่ที่ Time & language → Speech → Manage voices) จากนั้นปิดแล้วเปิดเบราว์เซอร์ใหม่ หรือใช้ Microsoft Edge ซึ่งมีเสียงไทยออนไลน์ให้ทันที";
   if (/Android/i.test(ua)) return "Android: ติดตั้ง/อัปเดต 'Speech Recognition & Synthesis' ของ Google แล้วเพิ่มภาษาไทยใน Settings → Text-to-speech";
   if (isIOS()) return "iPhone/iPad: ใช้ Safari และเปิดเสียงภาษาไทยใน Settings → Accessibility → Spoken Content → Voices → Thai";
   if (/Mac OS/i.test(ua)) return "Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → เพิ่ม Thai";
