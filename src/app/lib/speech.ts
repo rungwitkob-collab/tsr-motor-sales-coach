@@ -262,6 +262,9 @@ export function thaiVoiceHint(): string {
 
 export type SpeechProvider = "ai" | "browser";
 
+/** จำไว้ตลอดอายุหน้าเว็บว่า Worker ปิดเสียงจาก AI (501 NOT_CONFIGURED) จะได้ไม่เรียก /api/tts ซ้ำทุกประโยค */
+let aiTtsDisabled = false;
+
 export function useSpeechSynthesis() {
   const [supported] = useState(
     () => typeof window !== "undefined" && (getAudioContextCtor() !== undefined || "speechSynthesis" in window),
@@ -308,6 +311,7 @@ export function useSpeechSynthesis() {
 
   /** เล่นเสียงจาก Gemini TTS คืน true เมื่อจัดการแล้ว (เล่นจบ/ถูกแทรก) คืน false ให้ใช้เสียงเบราว์เซอร์แทน */
   const speakWithAi = useCallback(async (text: string, gender: Gender, token: number): Promise<boolean> => {
+    if (aiTtsDisabled) return false;
     const ctx = getAudioContext();
     if (!ctx) return false;
     if (!recognitionActive) setAudioSessionType("playback");
@@ -331,7 +335,10 @@ export function useSpeechSynthesis() {
       } catch (err) {
         if (isAbortError(err)) return true;
         if (err instanceof ApiError) {
-          if (err.code === "NOT_CONFIGURED") setNotice(null);
+          if (err.code === "NOT_CONFIGURED") {
+            aiTtsDisabled = true;
+            setNotice(null);
+          }
           else if (err.code === "QUOTA_EXCEEDED" || err.code === "RATE_LIMITED") {
             setNotice("โควตาเสียงลูกค้าจาก AI เต็มชั่วคราว ใช้เสียงอ่านของเบราว์เซอร์แทน");
           } else setNotice(`เสียงลูกค้าจาก AI ขัดข้อง (${err.message}) ใช้เสียงอ่านของเบราว์เซอร์แทน`);

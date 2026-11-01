@@ -22,7 +22,8 @@
     // ตัวเลือกที่รองรับ: gemini-3.5-flash-lite (ประหยัดโควตา), gemini-3.5-flash, gemini-3.8-flash, gemini-2.5-flash
     "GEMINI_MODEL": "gemini-3.5-flash-lite",
     // รุ่น TTS สำหรับเสียงลูกค้า (รองรับภาษาไทย) ใส่ "off" เพื่อกลับไปใช้เสียงอ่านของเบราว์เซอร์
-    "GEMINI_TTS_MODEL": "gemini-3.8-flash-tts",
+    // ปัจจุบันตั้ง "off" ตามที่ทีมเลือก: ใช้เสียงอ่านของเบราว์เซอร์ ไม่กินโควตา Gemini (เปิดกลับโดยใส่ "gemini-3.8-flash-tts")
+    "GEMINI_TTS_MODEL": "off",
     "RATE_LIMIT_PER_MINUTE": "20"
   },
   "observability": {
